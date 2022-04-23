@@ -31,14 +31,14 @@ DSL-AC55U:
       password: admin
 RT-N18U:
    address: 10.0.0.2
-   backend: dd-wrt_broadcom
+   backend: dd-wrt
    transport:
       protocol: ssh
       username: root
       password: admin
 TL-WR1043ND:
    address: 10.0.0.3
-   backend: dd-wrt_atheros
+   backend: dd-wrt
    transport:
       protocol: ssh
       username: root
