@@ -8,7 +8,9 @@
  - [ ] Docker container
 
 ## Collected metrics
- - [ ] Connected WiFi clients' MAC addresses
+ - [ ] Number of connected WiFi clients
+ - [ ] Clients' MAC addresses (can be mapped to names)
+ - [ ] Clients' RSSI
 
 ## Config file markup
 
@@ -43,4 +45,10 @@ TL-WR1043ND:
       protocol: ssh
       username: root
       use_keys: True
+```
+
+mapping.yml:
+```yml
+00:00:00:00:00:00: "Phone"
+11:11:11:11:11:11: "Laptop"
 ```
