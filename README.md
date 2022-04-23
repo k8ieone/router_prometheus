@@ -22,12 +22,24 @@ debug: yes
 routers.yml:
 ```yml
 DSL-AC55U:
-	address: 10.0.0.1
-	backend: dsl-ac55U
+   address: 10.0.0.1
+   backend:
+      name: dsl-ac55U
+      protocol: telnet
+      username: admin
+      password: admin
 RT-N18U:
    address: 10.0.0.2
-   backend: dd-wrt_broadcom
+   backend:
+      name: dd-wrt_broadcom
+      protocol: ssh
+      username: root
+      password: admin
 TL-WR1043ND:
    address: 10.0.0.3
-   backend: dd-wrt_atheros
+   backend:
+      name: dd-wrt_atheros
+      protocol: ssh
+      username: root
+      use_keys: True
 ```
