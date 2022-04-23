@@ -5,10 +5,11 @@ import sys
 import logging
 import yaml
 
+import router
+
 DATA_DIRECTORY = os.getcwd()
 MAIN_CONFIG_LOCATION = DATA_DIRECTORY + "/config/config.yml"
 ROUTERS_CONFIG_LOCATION = DATA_DIRECTORY + "/config/routers.yml"
-
 
 def load_main_config():
     """Tries to create a config directory first
@@ -62,7 +63,7 @@ def create_main_config():
 def create_routers_config():
     """Creates an example routers config file"""
     print("Creating an example routers config file...")
-    routers = {'router1': {'address': 'ip', 'backend': 'dsl-ac55U', 'transport': {'protocol': 'telnet', 'username': 'admin', 'password': 'admin'}}, 'router2': {'address': 'ip', 'backend': 'dd-wrt_broadcom', 'transport': {'protocol': 'ssh', 'username': 'root', 'password': 'admin'}}, 'router3': {'address': 'ip', 'backend': 'dd-wrt_atheros', 'transport': {'protocol': 'ssh', 'username': 'root', 'use_keys': True}}}
+    routers = {'router1': {'address': 'ip', 'backend': 'dsl-ac55U', 'transport': {'protocol': 'telnet', 'username': 'admin', 'password': 'admin'}}, 'router2': {'address': 'ip', 'backend': 'dd-wrt', 'transport': {'protocol': 'ssh', 'username': 'root', 'password': 'admin'}}, 'router3': {'address': 'ip', 'backend': 'dd-wrt', 'transport': {'protocol': 'ssh', 'username': 'root', 'use_keys': True}}}
     try:
         with open(ROUTERS_CONFIG_LOCATION, "w", encoding="utf-8") as routers_config:
             yaml.dump(routers, routers_config)
@@ -73,12 +74,27 @@ def create_routers_config():
     print("Exitting...")
     sys.exit()
 
+def create_router_list(routers_dict):
+    """Returns a list of router objects"""
+    routers = []
+    for r in routers_dict:
+        if routers_dict[r]["backend"] == "dd-wrt":
+            try:
+                router_object = router.DdwrtRouter({r: routers_dict[r]})
+            except Exception:
+                pass
+            else:
+                routers.append(router.DdwrtRouter({r: routers_dict[r]}))
+    return routers
 
 def main():
     config = load_main_config()
-    routers = load_routers_config()
-    print(config)
-    print(routers)
+    if config["debug"]:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.debug("Debug output enabled!")
+    routers = create_router_list(load_routers_config())
+    for r in routers:
+        print(r)
 
 
 if __name__ == "__main__":
