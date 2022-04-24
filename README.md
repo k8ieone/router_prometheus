@@ -2,21 +2,19 @@
 
 ## Project goals
  - [X] YML configuration file for defining global options and routers
- - [ ] Different backends to get metrics from different routers (currently DD-WRT Broadcom, DD-WRT Atheros and DSL-AC55U) so that the project is extendable to more brands and systems
+ - [ ] Have different backends to get metrics from different routers so that the project is extendable to more router brands and systems
  - [ ] Using public key authentication in SSH
- - [ ] Expose a Prometheus endpoint so metrics can be scraped by Prometheus scrapers
+ - [X] Expose a Prometheus endpoint so metrics can be scraped by Prometheus scrapers
  - [ ] Docker container
 
 ## Collected metrics
- - [ ] Number of connected WiFi clients
- - [ ] Clients' MAC addresses (can be mapped to names)
- - [ ] Clients' RSSI
+ - [X] Number of connected WiFi clients
+ - [X] Clients' MAC addresses (can be mapped to names) and their signal strength
 
 ## Config file markup
 
 config.yml:
 ```yml
-interval: 5
 port: 8080
 address: 127.0.0.1
 debug: yes
