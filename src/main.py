@@ -3,8 +3,7 @@
 import os
 import sys
 import logging
-import time
-import threading
+import signal
 import yaml
 
 from prometheus_client import start_http_server, Gauge
@@ -117,7 +116,7 @@ def start_threads(routers):
     for r in routers:
         threaded_loop(r)
 
-class CustomCollector:
+class RouterCollector:
     def __init__(self, r):
         self.r = r
 
@@ -146,11 +145,20 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
         logging.debug("Debug output enabled!")
     routers = create_router_list(load_routers_config(), load_mapping_config())
+    collectors = []
     for r in routers:
-        REGISTRY.register(CustomCollector(r))
+        collectors.append(RouterCollector(r))
+    for c in collectors:
+        REGISTRY.register(c)
     start_http_server(9000)
-    while True:
-        time.sleep(config["interval"])
+    try:
+        signal.pause()
+    except KeyboardInterrupt:
+        print("\nCaught CTRL+C, clsing connections")
+        for r in routers:
+            r.cleanup()
+        for c in collectors:
+            REGISTRY.unregister(c)
 
 if __name__ == "__main__":
     main()
