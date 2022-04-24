@@ -150,15 +150,15 @@ def main():
         collectors.append(RouterCollector(r))
     for c in collectors:
         REGISTRY.register(c)
-    start_http_server(9000)
+    start_http_server(config["port"], config["address"])
     try:
         signal.pause()
     except KeyboardInterrupt:
         print("\nCaught CTRL+C, clsing connections")
-        for r in routers:
-            r.cleanup()
         for c in collectors:
             REGISTRY.unregister(c)
+        for r in routers:
+            r.cleanup()
 
 if __name__ == "__main__":
     main()
