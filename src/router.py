@@ -55,7 +55,7 @@ class Router:
             if self.connection.is_connected:
                 pass
             else:
-                self.connection_test()
+                self.establish_connection()
             self.clients_list_method = self.get_clients_list_ssh
             self.rssi_method = self.get_rssi_ssh
         elif self.protocol == "telnet":
@@ -96,7 +96,7 @@ class Router:
                     translated_dict.update({mac: self.rssi_dict[mac]})
             return translated_dict
 
-    def connection_test(self):
+    def establish_connection(self):
         """Throws exception if protocol is not supported, tests the connection otherwise"""
 
         if self.protocol not in self.supported_protocols:
@@ -113,6 +113,10 @@ class Router:
         elif self.protocol == "http":
             pass
 
+    def cleanup(self):
+        if self.protocol == "ssh":
+            if self.connection.is_connected:
+                self.connection.close()
 
 class DdwrtRouter(Router):
     """Inherits from the generic router class and adds DD-WRT-specific stuff"""
@@ -121,7 +125,7 @@ class DdwrtRouter(Router):
         Router.__init__(self, routerconfig, mapping)
         self.supported_protocols.remove("telnet")
         self.supported_protocols.remove("http")
-        self.connection_test()
+        self.establish_connection()
         try:
             self.connection.run("wl", hide=True)
         except invoke.exceptions.UnexpectedExit:
