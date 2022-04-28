@@ -5,7 +5,7 @@
  - [ ] Have different backends to get metrics from different routers so that the project is extendable to more router brands and systems
  - [ ] Using public key authentication in SSH
  - [X] Expose a Prometheus endpoint so metrics can be scraped by Prometheus scrapers
- - [ ] Docker container
+ - [X] Docker container
 
 ## Collected metrics
  - [X] Number of connected WiFi clients
