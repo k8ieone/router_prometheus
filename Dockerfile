@@ -1,4 +1,5 @@
 FROM alpine:edge
+LABEL org.opencontainers.image.source https://github.com/satcom886/router_prometheus
 
 RUN mkdir -p /app/config /app/src
 ADD src /app/src
