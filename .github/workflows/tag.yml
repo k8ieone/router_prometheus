@@ -1,4 +1,4 @@
-name: "Build when creating a new tag"
+name: "Build Docker image"
 
 on:
   push:
