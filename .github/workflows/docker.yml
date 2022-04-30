@@ -7,16 +7,27 @@ on:
     tags:
       - 'v*.*.*'
 
-env:
-  RELEASE_VERSION: ${GITHUB_REF#refs/*/}
-
 jobs:
-  master:
+  docker:
     runs-on: ubuntu-latest
     steps:
       -
         name: Checkout
         uses: actions/checkout@v2
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            ${{ secrets.GHCR_USERNAME }}/router_prometheus
+            ghcr.io/${{ secrets.GHCR_USERNAME }}/router_prometheus
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=ref,event=tag
+            type=ref,event=branch
+#            type=semver,pattern={{raw}}
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -31,22 +42,11 @@ jobs:
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_TOKEN }}
       -
-        name: Build and push if the commit was to 'master'
+        name: Build and push the image
         if: github.ref == 'refs/heads/master'
-        uses: docker/build-push-action@v2.10.0
+        uses: docker/build-push-action@v2
         with:
           context: .
           platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6,linux/riscv64
           push: true
-          tags: ghcr.io/${{ secrets.GHCR_USERNAME }}/router_prometheus:master
-      -
-        name: Build and push if a tag was created
-        if: ${{ env.RELEASE_VERSION }} != '' && github.ref == 'refs/heads/master'
-        uses: docker/build-push-action@v2.10.0
-        with:
-          context: .
-          platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6,linux/riscv64
-          push: true
-          tags: |
-            ghcr.io/${{ secrets.GHCR_USERNAME }}/router_prometheus:latest
-            ghcr.io/${{ secrets.GHCR_USERNAME }}/router_prometheus:${{ env.RELEASE_VERSION }}
+          tags: {{ steps.meta.outputs.tags }}
