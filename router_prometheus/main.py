@@ -1,5 +1,3 @@
-#!/bin/env python3
-
 import os
 import sys
 import logging
@@ -12,8 +10,8 @@ from prometheus_client.core import GaugeMetricFamily, InfoMetricFamily, REGISTRY
 # from prometheus_client.core import REGISTRY
 
 # Custom modules import
-from .router import *
-from .exceptions import *
+from . import router
+from . import exceptions
 
 DATA_DIRECTORY = os.getcwd()
 MAIN_CONFIG_LOCATION = DATA_DIRECTORY + "/config/config.yml"
