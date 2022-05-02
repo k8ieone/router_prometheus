@@ -12,8 +12,8 @@ from prometheus_client.core import GaugeMetricFamily, InfoMetricFamily, REGISTRY
 # from prometheus_client.core import REGISTRY
 
 # Custom modules import
-import router
-import exceptions
+from .router import *
+from .exceptions import *
 
 DATA_DIRECTORY = os.getcwd()
 MAIN_CONFIG_LOCATION = DATA_DIRECTORY + "/config/config.yml"
