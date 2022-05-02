@@ -1,5 +1,3 @@
-#!Pbin/env python3
-
 class ConnectionFailed(Exception):
     pass
 

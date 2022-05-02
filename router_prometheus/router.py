@@ -1,9 +1,7 @@
-#!/bin/env python3
-
 import fabric
 import invoke
 
-from .exceptions import *
+from . import exceptions
 
 class Router:
     """Generic router class"""
