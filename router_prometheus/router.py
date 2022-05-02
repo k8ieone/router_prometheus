@@ -3,7 +3,7 @@
 import fabric
 import invoke
 
-import exceptions
+from .exceptions import *
 
 class Router:
     """Generic router class"""
