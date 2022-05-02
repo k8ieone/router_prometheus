@@ -26,5 +26,6 @@ setuptools.setup(
         "router_prometheus = router_prometheus.main:main"
         ]
     },
-    python_requires=">=3.6",
+    install_requires = ["PyYAML", "fabric", "prometheus_client"],
+    python_requires=">=3.6"
 )
