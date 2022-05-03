@@ -20,12 +20,12 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages = setuptools.find_packages(include=["router_prometheus"]),
+    packages=setuptools.find_packages(include=["router_prometheus"]),
     entry_points={
     "console_scripts": [
         "router_prometheus = router_prometheus.main:main"
         ]
     },
-    install_requires = ["PyYAML", "fabric", "prometheus_client"],
+    install_requires=["PyYAML", "fabric", "prometheus_client"],
     python_requires=">=3.6"
 )
