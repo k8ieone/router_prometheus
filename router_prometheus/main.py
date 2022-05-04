@@ -150,8 +150,8 @@ class RouterCollector:
         hosts = translate_macs(self.rtr.ss_dict)
         hosts_5ghz = translate_macs(self.rtr.ss_dict_5ghz)
         yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients', 'Number of connected clients', value=len(hosts.keys()) + len(hosts_5ghz.keys()))
-        rssi_gauge = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_rssi', 'Client Signal Strength', labels=["address"])
-        rssi_gauge_5ghz = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_rssi_5ghz', 'Client Signal Strength (5 GHz)', labels=["address"])
+        ss_gauge = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_signal', 'Client Signal Strength', labels=["address"])
+        ss_gauge_5ghz = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_signal_5ghz', 'Client Signal Strength (5 GHz)', labels=["address"])
         #i = InfoMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_rssi', 'List of clients and their RSSIs')
         for host in list(hosts.keys()) + list(hosts_5ghz.keys()):
             # These try-except-else blocks are only necessary because of
@@ -164,11 +164,11 @@ class RouterCollector:
                 name = "m_" +  host.replace(":", "_")
             #i.add_metric(value={name: hosts[host]}, labels="signal")
             if host in hosts:
-                rssi_gauge.add_metric(labels=[name], value=hosts[host])
+                ss_gauge.add_metric(labels=[name], value=hosts[host])
             elif host in hosts_5ghz:
-                rssi_gauge_5ghz.add_metric(labels=[name], value=hosts_5ghz[host])
-        yield rssi_gauge
-        yield rssi_gauge_5ghz
+                ss_gauge_5ghz.add_metric(labels=[name], value=hosts_5ghz[host])
+        yield ss_gauge
+        yield ss_gauge_5ghz
         #yield i
 
 
