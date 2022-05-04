@@ -118,7 +118,11 @@ class DdwrtRouter(Router):
         Takes a MAC address string
         Returns a dict with a MAC and its RSSI value"""
 
-        return {mac: self.connection.run(self.wl_command + " rssi " + mac, hide=True).stdout.strip().split()[-1]}
+        try:
+            output = self.connection.run(self.wl_command + " rssi " + mac, hide=True)
+            return {mac: output.stdout.strip().split()[-1]}
+        except invoke.exceptions.UnexpectedExit:
+            return {mac: None}
 
     def get_clients_list(self):
         """Gets the list of connected clients from the router
