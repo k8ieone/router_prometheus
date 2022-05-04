@@ -3,6 +3,7 @@ import sys
 import logging
 import signal
 import yaml
+import paramiko
 
 from prometheus_client import start_http_server
 from prometheus_client.core import GaugeMetricFamily, REGISTRY
@@ -97,16 +98,19 @@ def create_router_list(routers_dict):
     routers = []
     for rtr in routers_dict:
         if routers_dict[rtr]["backend"] == "dd-wrt":
-            try:
-                router_object = router.DdwrtRouter({rtr: routers_dict[rtr]})
-            except exceptions.ConnectionFailed:
-                print("Error connecting to router " + rtr)
-            except exceptions.UnsupportedProtocol:
-                print("Router " + rtr + " does not support the " + routers_dict[rtr]["transport"]["protocol"] + " protocol")
-            except exceptions.MissingCommand:
-                print(rtr + " is missing both wl and wl_atheros")
-            else:
-                routers.append(router_object)
+            router_class = router.DdwrtRouter
+        elif routers_dict[rtr]["backend"] == "dsl-ac55U":
+            router_class = router.Dslac55uRouter
+        try:
+            router_object = router_class({rtr: routers_dict[rtr]})
+        except paramiko.ssh_exception.NoValidConnectionsError:
+            print("Error connecting to router " + rtr)
+        except exceptions.UnsupportedProtocol:
+            print("Router " + rtr + " does not support the " + routers_dict[rtr]["transport"]["protocol"] + " protocol")
+        except exceptions.MissingCommand:
+            print(rtr + " is missing both the 'wl' and 'wl_atheros' commands")
+        else:
+            routers.append(router_object)
     return routers
 
 
@@ -136,8 +140,8 @@ class RouterCollector:
     def collect(self):
         """This is the function internally called by prometheus_client"""
         self.rtr.update()
-        hosts = translate_macs(self.rtr.rssi_dict)
-        yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients', 'Number of connected clients', value=len(self.rtr.clients_list))
+        hosts = translate_macs(self.rtr.ss_dict)
+        yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients', 'Number of connected clients', value=len(hosts.keys()))
         rssi_gauge = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_rssi', 'Client RSSI', labels=["address"])
         #i = InfoMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_rssi', 'List of clients and their RSSIs')
         for host in hosts:
@@ -163,6 +167,7 @@ def main():
     routers = create_router_list(load_routers_config())
     collectors = []
     for rtr in routers:
+        print("Adding collector for " + str(rtr))
         collectors.append(RouterCollector(rtr))
     for collector in collectors:
         REGISTRY.register(collector)
@@ -170,11 +175,9 @@ def main():
     try:
         signal.pause()
     except KeyboardInterrupt:
-        print("\nCaught CTRL+C, clsing connections")
+        print("\nCaught CTRL+C, stopping program...")
         for collector in collectors:
             REGISTRY.unregister(collector)
-        for rtr in routers:
-            rtr.cleanup()
 
 
 if __name__ == "__main__":
