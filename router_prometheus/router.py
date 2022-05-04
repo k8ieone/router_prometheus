@@ -6,7 +6,7 @@ from . import exceptions
 class Router:
     """Generic router class"""
 
-    def __init__(self, routerconfig, mapping):
+    def __init__(self, routerconfig):
         self.name = list(routerconfig)[0]
         self.address = routerconfig[self.name]["address"]
         self.protocol = routerconfig[self.name]["transport"]["protocol"]
@@ -24,7 +24,6 @@ class Router:
         else:
             self.use_keys = routerconfig["transport"]["use_keys"]
         self.supported_protocols = ["telnet", "ssh", "http"]
-        self.mapping = mapping
         self.clients_list = []
         self.rssi_dict = {}
 
@@ -80,20 +79,6 @@ class Router:
         else:
             return self.clients_list
 
-    def translate_macs(self):
-        """Takes the mapping dict and RSSI dict and replaces
-        known MAC addresses with nicknames from mapping
-        returns another dict"""
-
-        translated_dict = {}
-        if self.rssi_dict is not None:
-            for mac in self.rssi_dict.keys():
-                if mac in self.mapping:
-                    translated_dict.update({self.mapping[mac]: self.rssi_dict[mac]})
-                else:
-                    translated_dict.update({mac: self.rssi_dict[mac]})
-            return translated_dict
-
     def establish_connection(self):
         """Throws exception if protocol is not supported, tests the connection otherwise"""
 
@@ -119,8 +104,8 @@ class Router:
 class DdwrtRouter(Router):
     """Inherits from the generic router class and adds DD-WRT-specific stuff"""
 
-    def __init__(self, routerconfig, mapping):
-        Router.__init__(self, routerconfig, mapping)
+    def __init__(self, routerconfig):
+        Router.__init__(self, routerconfig)
         self.supported_protocols.remove("telnet")
         self.supported_protocols.remove("http")
         self.establish_connection()
@@ -162,3 +147,11 @@ class DdwrtRouter(Router):
 
         response = self.connection.run(self.wl_command + " assoclist", hide=True)
         return self.parse_wl_output(response)
+
+class Dslac55uRouter(Router):
+
+    def __init__(self, routerconfig):
+        Router.__init__(self, routerconfig)
+        self.supported_protocols.remove("telnet")
+        self.supported_protocols.remove("http")
+        self.establish_connection()
