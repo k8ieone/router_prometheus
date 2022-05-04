@@ -177,6 +177,9 @@ class Dslac55uRouter(Router):
                     devlines.append(line)
             if len(devlines) != 0:
                 for line in devlines:
-                    ss_dict.update({line.split()[0]: line.split()[1].replace("dBm", "")})
+                    try:
+                        ss_dict.update({line.split()[0]: line.split()[1].replace("dBm", "")})
+                    except IndexError:
+                        print(devlines)
             return ss_dict
             #return lines[start] + ", last: " + lines[end]
