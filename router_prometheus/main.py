@@ -4,10 +4,9 @@ import logging
 import signal
 import yaml
 
-from prometheus_client import start_http_server, Gauge
-from prometheus_client.core import GaugeMetricFamily, InfoMetricFamily, REGISTRY
+from prometheus_client import start_http_server
+from prometheus_client.core import GaugeMetricFamily, REGISTRY
 # Todo: Figure out how to unregister the default collectors
-# from prometheus_client.core import REGISTRY
 
 # Custom modules import
 from . import router
@@ -17,6 +16,7 @@ DATA_DIRECTORY = os.getcwd()
 MAIN_CONFIG_LOCATION = DATA_DIRECTORY + "/config/config.yml"
 ROUTERS_CONFIG_LOCATION = DATA_DIRECTORY + "/config/routers.yml"
 MAPPING_CONFIG_LOCATION = DATA_DIRECTORY + "/config/mapping.yml"
+
 
 def load_main_config():
     """Tries to create a config directory first
@@ -50,6 +50,7 @@ def load_routers_config():
     except FileNotFoundError:
         create_routers_config()
 
+
 def load_mapping_config():
     """Same as load_routers_config() but with the mapping config and without
     creating the file"""
@@ -58,6 +59,7 @@ def load_mapping_config():
             return yaml.safe_load(mapping_config)
     except FileNotFoundError:
         return None
+
 
 def create_main_config():
     """Creates an example main config file"""
@@ -89,51 +91,50 @@ def create_routers_config():
     print("Exitting...")
     sys.exit()
 
+
 def create_router_list(routers_dict, mapping):
     """Returns a list of router objects"""
     routers = []
-    for r in routers_dict:
-        if routers_dict[r]["backend"] == "dd-wrt":
+    for rtr in routers_dict:
+        if routers_dict[rtr]["backend"] == "dd-wrt":
             try:
-                router_object = router.DdwrtRouter({r: routers_dict[r]}, mapping)
+                router_object = router.DdwrtRouter({rtr: routers_dict[rtr]}, mapping)
             except exceptions.ConnectionFailed:
-                print("Error connecting to router " + r)
+                print("Error connecting to router " + rtr)
             except exceptions.UnsupportedProtocol:
-                print("Router " + r + " does not support the " + routers_dict[r]["transport"]["protocol"] + " protocol")
+                print("Router " + rtr + " does not support the " + routers_dict[rtr]["transport"]["protocol"] + " protocol")
             except exceptions.MissingCommand:
-                print(r + " is missing both wl and wl_atheros")
+                print(rtr + " is missing both wl and wl_atheros")
             else:
                 routers.append(router_object)
     return routers
 
 
-def threaded_loop(r):
-    connection = "c"
-
-def start_threads(routers):
-    for r in routers:
-        threaded_loop(r)
-
 class RouterCollector:
-    def __init__(self, r):
-        self.r = r
+    """Custom collector class for prometheus_client"""
+
+    def __init__(self, rtr):
+        self.rtr = rtr
 
     def collect(self):
-        self.r.update()
-        hosts = self.r.translate_macs()
-        yield GaugeMetricFamily(self.r.name.replace("-", "_").lower() + '_clients', 'Number of connected clients', value=len(self.r.clients_list))
-        m = GaugeMetricFamily(self.r.name.replace("-", "_").lower() + '_client_rssi', 'Client RSSI', labels=["address"])
-        #i = InfoMetricFamily(self.r.name.replace("-", "_").lower() + '_clients_rssi', 'List of clients and their RSSIs')
+        """This is the function internally called by prometheus_client"""
+        self.rtr.update()
+        hosts = self.rtr.translate_macs()
+        yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients', 'Number of connected clients', value=len(self.rtr.clients_list))
+        rssi_gauge = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_rssi', 'Client RSSI', labels=["address"])
+        #i = InfoMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_rssi', 'List of clients and their RSSIs')
         for host in hosts:
+            # These try-except-else blocks are only necessary because of
+            # prometheus disallowing the first character to be a number
             try:
                 int(host[0])
-            except:
+            except ValueError:
                 name = host.replace(":", "_")
             else:
                 name = "m_" +  host.replace(":", "_")
             #i.add_metric(value={name: hosts[host]}, labels="signal")
-            m.add_metric(labels=[name], value=hosts[host])
-        yield m
+            rssi_gauge.add_metric(labels=[name], value=hosts[host])
+        yield rssi_gauge
         #yield i
 
 
@@ -144,23 +145,20 @@ def main():
         logging.debug("Debug output enabled!")
     routers = create_router_list(load_routers_config(), load_mapping_config())
     collectors = []
-    for r in routers:
-        collectors.append(RouterCollector(r))
-    for c in collectors:
-        REGISTRY.register(c)
+    for rtr in routers:
+        collectors.append(RouterCollector(rtr))
+    for collector in collectors:
+        REGISTRY.register(collector)
     start_http_server(config["port"], config["address"])
     try:
         signal.pause()
     except KeyboardInterrupt:
         print("\nCaught CTRL+C, clsing connections")
-        for c in collectors:
-            REGISTRY.unregister(c)
-        for r in routers:
-            r.cleanup()
+        for collector in collectors:
+            REGISTRY.unregister(collector)
+        for rtr in routers:
+            rtr.cleanup()
+
 
 if __name__ == "__main__":
     main()
-
-# Read the config files
-# Connect to each router
-# Print connected clients
