@@ -24,7 +24,9 @@ class Router:
         else:
             self.use_keys = routerconfig["transport"]["use_keys"]
         self.supported_protocols = ["telnet", "ssh", "http"]
+        self.metrics = ["ss", "channel"]
         self.ss_dict = {}
+        self.ss_dict_5ghz = {}
 
     def __del__(self):
         print("Called " + self.name + "'s destructor")
@@ -72,17 +74,18 @@ class DdwrtRouter(Router):
         self.supported_protocols.remove("telnet")
         self.supported_protocols.remove("http")
         self.connect()
-        try:
-            self.connection.run("wl", hide=True)
-        except invoke.exceptions.UnexpectedExit:
-            self.wl_command = "wl_atheros"
-        else:
-            self.wl_command = "wl"
-        try:
-            self.connection.run(self.wl_command, hide=True)
-        except invoke.exceptions.UnexpectedExit:
-            print("Both commands failed")
-            raise exceptions.MissingCommand
+        if self.protocol == "ssh":
+            try:
+                self.connection.run("wl", hide=True)
+            except invoke.exceptions.UnexpectedExit:
+                self.wl_command = "wl_atheros"
+            else:
+                self.wl_command = "wl"
+            try:
+                self.connection.run(self.wl_command, hide=True)
+            except invoke.exceptions.UnexpectedExit:
+                print("Both commands failed")
+                raise exceptions.MissingCommand
 
     def __str__(self):
         return "DD-WRT " + Router.__str__(self)
@@ -119,7 +122,8 @@ class DdwrtRouter(Router):
         return {mac: self.connection.run(self.wl_command + " rssi " + mac, hide=True).stdout.strip().split()[-1]}
 
     def get_clients_list(self):
-        """Returns list of connected wireless clients"""
+        """Gets the list of connected clients from the router
+        Uses parse_wl_output to turn the wl output to a list"""
         response = self.connection.run(self.wl_command + " assoclist", hide=True)
         return self.parse_wl_output(response)
 
@@ -135,5 +139,41 @@ class Dslac55uRouter(Router):
     def __str__(self):
         return "DSL-AC55U " + Router.__str__(self)
 
-    #def get_ss_dict(self):
-    #    pass
+    def update(self):
+        ate_output = self.connection.run("ATE show_stainfo", hide=True, warn=True).stdout
+        self.ss_dict = self.ate_output_ss(ate_output, "2.4")
+        self.ss_dict_5ghz = self.ate_output_ss(ate_output, "5")
+
+    def ate_output_ss(self, ate_output, band):
+        """Returns a dict with a MAC and its signal strength"""
+        lines = ate_output.strip().splitlines()
+        if "2.4 GHz radio is disabled" in lines and band == "2.4":
+            return {}
+        elif "5 GHz radio is disabled" in lines and band == "5":
+            return {}
+        else:
+            #print(lines)
+            #print("^^^^^^^^^^^^^^^^^^^^^^^ raw lines for " + band)
+            start = 0
+            end = 0
+            for index, line in enumerate(lines):
+                if line == "----------------------------------------":
+                    if index == 6 and band == "2.4":
+                        start = index + 2
+                    elif index > 6 and band == "5":
+                        start = index + 2
+                elif line == "" and lines[index + 1] == "" and band == "2.4":
+                    end = index - 1
+                    break
+                elif index == len(lines) - 1 and band == "5":
+                    end = index
+            devlines = []
+            ss_dict = {}
+            for index, line in enumerate(lines):
+                if index >= start and index <= end:
+                    devlines.append(line)
+            if len(devlines) != 0:
+                for line in devlines:
+                    ss_dict.update({line.split()[0]: line.split()[1].replace("dBm", "")})
+            return ss_dict
+            #return lines[start] + ", last: " + lines[end]
