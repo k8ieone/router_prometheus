@@ -20,4 +20,4 @@ RUN apk add py3-pip && pip3 install /dist/* && apk del -r py3-pip && rm -r /dist
 
 # The port instide the container must remain set to 8080 in order for this healthcheck to work
 HEALTHCHECK --interval=60s --timeout=5s CMD curl -f http://localhost:8080/ || exit 1
-CMD router_prometheus
+CMD ["python3", "-u", "-m", "router_prometheus"]
