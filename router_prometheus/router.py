@@ -22,9 +22,8 @@ class Router:
         except KeyError:
             self.use_keys = False
         else:
-            self.use_keys = routerconfig["transport"]["use_keys"]
+            self.use_keys = routerconfig[self.name]["transport"]["use_keys"]
         self.supported_protocols = ["telnet", "ssh", "http"]
-        self.metrics = ["ss", "channel"]
         self.ss_dict = {}
         self.ss_dict_5ghz = {}
 
@@ -55,7 +54,7 @@ class Router:
         if self.protocol == "telnet":
             pass
         elif self.protocol == "ssh":
-            self.connection = fabric.Connection(host=self.address, user=self.username, connect_kwargs={"password": self.password, "timeout": 15.0})
+            self.connection = fabric.Connection(host=self.address, user=self.username, connect_kwargs={"password": self.password, "timeout": 30.0})
             # self.connection.transport.set_keepalive(5)
             result = self.connection.run("hostname", hide=True)
             if result.ok:
