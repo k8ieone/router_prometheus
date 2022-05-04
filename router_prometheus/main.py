@@ -92,13 +92,13 @@ def create_routers_config():
     sys.exit()
 
 
-def create_router_list(routers_dict, mapping):
+def create_router_list(routers_dict):
     """Returns a list of router objects"""
     routers = []
     for rtr in routers_dict:
         if routers_dict[rtr]["backend"] == "dd-wrt":
             try:
-                router_object = router.DdwrtRouter({rtr: routers_dict[rtr]}, mapping)
+                router_object = router.DdwrtRouter({rtr: routers_dict[rtr]})
             except exceptions.ConnectionFailed:
                 print("Error connecting to router " + rtr)
             except exceptions.UnsupportedProtocol:
@@ -110,6 +110,23 @@ def create_router_list(routers_dict, mapping):
     return routers
 
 
+def translate_macs(rssi_dict):
+    """Takes the mapping dict and RSSI dict and replaces
+    known MAC addresses with nicknames from mapping
+    returns another dict"""
+    mapping = load_mapping_config()
+    translated_dict = {}
+    if rssi_dict is not None:
+        for mac in rssi_dict.keys():
+            if mac in mapping:
+                translated_dict.update({mapping[mac]: rssi_dict[mac]})
+            else:
+                translated_dict.update({mac: rssi_dict[mac]})
+        return translated_dict
+    else:
+        return rssi_dict
+
+
 class RouterCollector:
     """Custom collector class for prometheus_client"""
 
@@ -119,7 +136,7 @@ class RouterCollector:
     def collect(self):
         """This is the function internally called by prometheus_client"""
         self.rtr.update()
-        hosts = self.rtr.translate_macs()
+        hosts = translate_macs(self.rtr.rssi_dict)
         yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients', 'Number of connected clients', value=len(self.rtr.clients_list))
         rssi_gauge = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_rssi', 'Client RSSI', labels=["address"])
         #i = InfoMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_rssi', 'List of clients and their RSSIs')
@@ -143,7 +160,7 @@ def main():
     if config["debug"]:
         logging.basicConfig(level=logging.DEBUG)
         logging.debug("Debug output enabled!")
-    routers = create_router_list(load_routers_config(), load_mapping_config())
+    routers = create_router_list(load_routers_config())
     collectors = []
     for rtr in routers:
         collectors.append(RouterCollector(rtr))
