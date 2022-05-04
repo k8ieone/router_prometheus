@@ -4,6 +4,7 @@ import logging
 import signal
 import yaml
 import paramiko
+import socket
 
 from prometheus_client import start_http_server
 from prometheus_client.core import GaugeMetricFamily, REGISTRY
@@ -14,9 +15,11 @@ from . import router
 from . import exceptions
 
 DATA_DIRECTORY = os.getcwd()
-MAIN_CONFIG_LOCATION = DATA_DIRECTORY + "/config/config.yml"
-ROUTERS_CONFIG_LOCATION = DATA_DIRECTORY + "/config/routers.yml"
-MAPPING_CONFIG_LOCATION = DATA_DIRECTORY + "/config/mapping.yml"
+if os.getcwd() != "/":
+    DATA_DIRECTORY = os.getcwd() + "/"
+MAIN_CONFIG_LOCATION = DATA_DIRECTORY + "config/config.yml"
+ROUTERS_CONFIG_LOCATION = DATA_DIRECTORY + "config/routers.yml"
+MAPPING_CONFIG_LOCATION = DATA_DIRECTORY + "config/mapping.yml"
 
 
 def load_main_config():
@@ -25,7 +28,7 @@ def load_main_config():
     it executes create_main_config()
     if it finds it, it reads it and returns it as a dict"""
     try:
-        os.mkdir(os.getcwd() + "/config")
+        os.mkdir(os.getcwd() + "config")
     except FileExistsError:
         print("Config directory already exists")
     except OSError([30]):
@@ -105,10 +108,14 @@ def create_router_list(routers_dict):
             router_object = router_class({rtr: routers_dict[rtr]})
         except paramiko.ssh_exception.NoValidConnectionsError:
             print("Error connecting to router " + rtr)
+        except socket.gaierror:
+            print("Could not resolve address: " + routers_dict[rtr]["address"])
         except exceptions.UnsupportedProtocol:
             print("Router " + rtr + " does not support the " + routers_dict[rtr]["transport"]["protocol"] + " protocol")
         except exceptions.MissingCommand:
             print(rtr + " is missing both the 'wl' and 'wl_atheros' commands")
+        except TimeoutError:
+            print("Connecting to " + rtr + " timed out")
         else:
             routers.append(router_object)
     return routers
