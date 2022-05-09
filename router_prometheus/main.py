@@ -2,10 +2,10 @@ import os
 import sys
 import logging
 import signal
-import yaml
-import paramiko
 import socket
 
+import yaml
+import paramiko
 from prometheus_client import start_http_server
 from prometheus_client.core import GaugeMetricFamily, REGISTRY
 # Todo: Figure out how to unregister the default collectors
@@ -53,6 +53,7 @@ def load_routers_config():
             return yaml.safe_load(routers_config)
     except FileNotFoundError:
         create_routers_config()
+        return None
 
 
 def load_mapping_config():
@@ -147,29 +148,24 @@ class RouterCollector:
     def collect(self):
         """This is the function internally called by prometheus_client"""
         self.rtr.update()
-        hosts = translate_macs(self.rtr.ss_dict)
-        hosts_5ghz = translate_macs(self.rtr.ss_dict_5ghz)
-        yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients', 'Number of connected clients', value=len(hosts.keys()) + len(hosts_5ghz.keys()))
-        ss_gauge = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_signal', 'Client Signal Strength', labels=["address"])
-        ss_gauge_5ghz = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_signal_5ghz', 'Client Signal Strength (5 GHz)', labels=["address"])
-        #i = InfoMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_rssi', 'List of clients and their RSSIs')
-        for host in list(hosts.keys()) + list(hosts_5ghz.keys()):
-            # These try-except-else blocks are only necessary because of
-            # prometheus disallowing the first character to be a number
-            try:
-                int(host[0])
-            except ValueError:
-                name = host.replace(":", "_")
-            else:
-                name = "m_" +  host.replace(":", "_")
-            #i.add_metric(value={name: hosts[host]}, labels="signal")
-            if host in hosts:
+        for interface in self.rtr.wireless_interfaces:
+            hosts = translate_macs(self.rtr.ss_dict[interface])
+            yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_' + interface, 'Number of connected clients', value=len(hosts.keys()))
+            ss_gauge = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_signal_' + interface, 'Client Signal Strength', labels=["address"])
+            for host in list(hosts.keys()):
+                # These try-except-else blocks are only necessary because of
+                # prometheus disallowing the first character to be a number
+                try:
+                    int(host[0])
+                except ValueError:
+                    name = host.replace(":", "_")
+                else:
+                    name = "m_" +  host.replace(":", "_")
                 ss_gauge.add_metric(labels=[name], value=hosts[host])
-            elif host in hosts_5ghz:
-                ss_gauge_5ghz.add_metric(labels=[name], value=hosts_5ghz[host])
-        yield ss_gauge
-        yield ss_gauge_5ghz
-        #yield i
+            yield ss_gauge
+        # i = InfoMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_rssi', 'List of clients and their RSSIs')
+        # i.add_metric(value={name: hosts[host]}, labels="signal")
+        # yield i
 
 
 def main():

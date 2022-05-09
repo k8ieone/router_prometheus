@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="router_prometheus",
-    version="0.2.1",
+    version="0.2.2",
     author="satcom886",
     author_email="rostik.medved@gmail.com",
     description="Get metrics from various consumer routers",

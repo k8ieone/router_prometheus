@@ -11,7 +11,7 @@
  - [X] Number of connected WiFi clients
  - [X] Clients' MAC addresses (can be mapped to names) and their signal strength
    - [X] DSL-AC55U reports bands (2.4 GHz and 5 GHz) separately
-   - [ ] DD-WRT reports bands separately (I don't have a multiband router to do this with)
+   - [X] DD-WRT reports bands separately (I assume different bands are different interfaces and I create a metric for each interface)
  - [ ] Current channel (or radio off)
 
 ## Known issues
