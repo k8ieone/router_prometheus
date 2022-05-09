@@ -1,5 +1,8 @@
 # router_prometheus
 
+![Grafana Screenshot](grafana_screenshot.png)
+
+
 ## Project goals
  - [X] YML configuration file for defining global options and routers
  - [X] Have different backends to get metrics from different routers so that the project is extendable to more router brands and systems
