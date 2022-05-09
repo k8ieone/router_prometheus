@@ -70,7 +70,7 @@ def create_main_config():
     """Creates an example main config file"""
     print("Creating an example main config file...")
     config = {"interval": 5, "port": 8080,
-              "address": "127.0.0.1", "debug": True}
+              "address": "127.0.0.1", "debug": False}
     try:
         with open(MAIN_CONFIG_LOCATION, "w", encoding="utf-8") as main_config:
             yaml.dump(config, main_config)
