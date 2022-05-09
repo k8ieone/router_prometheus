@@ -12,7 +12,10 @@
  - [X] Clients' MAC addresses (can be mapped to names) and their signal strength
    - [X] DSL-AC55U reports bands (2.4 GHz and 5 GHz) separately
    - [X] DD-WRT reports bands separately (I assume different bands are different interfaces and I create a metric for each interface)
- - [ ] Current channel (or radio off)
+ - [X] Current channel
+   - DSL-AC55U still reports current channel even when the radio is disabled by timer
+     - When disabled manually, the radio correctly shows itself as disabled
+   - When the radio is off, the metric should be gone
 
 ## Known issues
  - When a command gets stuck, it hangs the whole progam indeffinitely (caused by [this issue](https://github.com/fabric/fabric/issues/2197))
