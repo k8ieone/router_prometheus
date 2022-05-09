@@ -148,9 +148,11 @@ class RouterCollector:
     def collect(self):
         """This is the function internally called by prometheus_client"""
         self.rtr.update()
-        for interface in self.rtr.wireless_interfaces:
-            hosts = translate_macs(self.rtr.ss_dict[interface])
+        for index, interface in enumerate(self.rtr.wireless_interfaces):
+            hosts = translate_macs(self.rtr.ss_dicts[index])
             yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_' + interface, 'Number of connected clients', value=len(hosts.keys()))
+            if self.rtr.channels[index] is not None:
+                yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_channel_' + interface, 'Current wireless channel', value=self.rtr.channels[index])
             ss_gauge = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_signal_' + interface, 'Client Signal Strength', labels=["address"])
             for host in list(hosts.keys()):
                 # These try-except-else blocks are only necessary because of
@@ -176,7 +178,7 @@ def main():
     routers = create_router_list(load_routers_config())
     collectors = []
     for rtr in routers:
-        print("Adding collector for " + str(rtr))
+        print("Adding collector for " + rtr.name)
         collectors.append(RouterCollector(rtr))
     for collector in collectors:
         REGISTRY.register(collector)

@@ -1,5 +1,6 @@
 import fabric
 import invoke
+import paramiko
 
 from . import exceptions
 
@@ -24,7 +25,8 @@ class Router:
         else:
             self.use_keys = routerconfig[self.name]["transport"]["use_keys"]
         self.supported_protocols = ["telnet", "ssh", "http"]
-        self.ss_dict = {}
+        self.ss_dicts = []
+        self.channels = []
         self.wireless_interfaces = []
 
     def __del__(self):
@@ -35,16 +37,17 @@ class Router:
                 self.connection.close()
 
     def __str__(self):
-        return "router " + self.name + " at " + self.address + " with protocol " + self.protocol
+        return "router " + self.name + " at " + self.address + " using " + self.protocol
 
     def update(self):
-        self.ss_dict = {}
+        self.ss_dicts = {}
 
     def connect(self):
         """Connects to the router, throws exceptions if it fails somehow"""
 
         if self.protocol not in self.supported_protocols:
             raise exceptions.UnsupportedProtocol("Unsupported protocol")
+        print("Connecting to " + str(self))
         if self.protocol == "telnet":
             pass
         elif self.protocol == "ssh":
@@ -84,10 +87,33 @@ class DdwrtRouter(Router):
         return "DD-WRT " + Router.__str__(self)
 
     def update(self):
-        self.ss_dict = {}
-        self.wireless_interfaces = self.get_interfaces()
-        for interface in self.wireless_interfaces:
-            self.ss_dict.update({interface: self.get_ss_dict(interface)})
+        self.ss_dicts = []
+        self.channels = []
+        try:
+            self.wireless_interfaces = self.get_interfaces()
+            for interface in self.wireless_interfaces:
+                self.ss_dicts.append(self.get_ss_dict(interface))
+                self.channels.append(self.get_channel(interface))
+        except paramiko.ssh_exception.SSHException:
+            self.connect()
+            self.update()
+
+    def get_channel(self, interface):
+        """Returns the interface's current channel"""
+        if self.wl_command == "wl":
+            radio_on = self.connection.run(self.wl_command + " -i " + interface + " radio", hide=True).stdout.strip()
+            if radio_on == "0x0001":
+                return None
+            lines = self.connection.run(self.wl_command + " -i " + interface + " channel", hide=True).stdout.strip().splitlines()
+            for line in lines:
+                if "current" in line:
+                    return line.split()[-1]
+        elif self.wl_command == "wl_atheros":
+            lines = self.connection.run("iw " + interface + " info", hide=True).stdout.strip().splitlines()
+            for line in lines:
+                if "channel" in line:
+                    return line.split()[1]
+            return None
 
     def get_interfaces(self):
         """Returns a list of wireless interfaces
@@ -155,9 +181,11 @@ class Dslac55uRouter(Router):
 
     def update(self):
         ate_output = self.connection.run("ATE show_stainfo", hide=True, warn=True).stdout
-        self.ss_dict = {}
+        self.ss_dicts = []
+        self.channels = []
         for interface in self.wireless_interfaces:
-            self.ss_dict.update({interface: self.ate_output_ss(ate_output, interface)})
+            self.ss_dicts.append(self.ate_output_ss(ate_output, interface))
+            self.channels.append(self.ate_output_channel(ate_output, interface))
         #self.ss_dict.update({"5g": self.ate_output_ss(ate_output, "5")})
 
     def ate_output_ss(self, ate_output, band):
@@ -195,3 +223,19 @@ class Dslac55uRouter(Router):
                     except IndexError:
                         print(devlines)
             return ss_dict
+
+    def ate_output_channel(self, ate_output, band):
+        """Returns a string containing the current channel"""
+        lines = ate_output.strip().splitlines()
+        if "2.4 GHz radio is disabled" in lines and band == "2g":
+            return None
+        elif "5 GHz radio is disabled" in lines and band == "5g":
+            return None
+        channel_lines = []
+        for line in lines:
+            if "Channel" in line:
+                channel_lines.append(line)
+        if band == "2g":
+            return channel_lines[0].split()[-1]
+        elif band == "5g":
+            return channel_lines[-1].split()[-1]
