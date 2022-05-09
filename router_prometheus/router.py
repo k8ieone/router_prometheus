@@ -25,7 +25,7 @@ class Router:
             self.use_keys = routerconfig[self.name]["transport"]["use_keys"]
         self.supported_protocols = ["telnet", "ssh", "http"]
         self.ss_dict = {}
-        self.ss_dict_5ghz = {}
+        self.wireless_interfaces = []
 
     def __del__(self):
         print("Called " + self.name + "'s destructor")
@@ -38,13 +38,7 @@ class Router:
         return "router " + self.name + " at " + self.address + " with protocol " + self.protocol
 
     def update(self):
-        self.ss_dict = self.get_ss_dict()
-
-    def get_ss_dict(self):
-        """Dummy function for getting a signal strength dict"""
-
-        ss_dict = {"dummy": 0}
-        return ss_dict
+        self.ss_dict = {}
 
     def connect(self):
         """Connects to the router, throws exceptions if it fails somehow"""
@@ -89,13 +83,29 @@ class DdwrtRouter(Router):
     def __str__(self):
         return "DD-WRT " + Router.__str__(self)
 
-    def get_ss_dict(self):
+    def update(self):
+        self.ss_dict = {}
+        self.wireless_interfaces = self.get_interfaces()
+        for interface in self.wireless_interfaces:
+            self.ss_dict.update({interface: self.get_ss_dict(interface)})
+
+    def get_interfaces(self):
+        """Returns a list of wireless interfaces
+        only called internally from the DD-WRT update() method"""
+        interfaces = self.connection.run("ls /sys/class/net", hide=True).stdout.strip().split()
+        wireless_interfaces = []
+        for interface in interfaces:
+            if "wireless" in self.connection.run("ls /sys/class/net/" + interface, hide=True).stdout.strip():
+                wireless_interfaces.append(interface)
+        return wireless_interfaces
+
+    def get_ss_dict(self, interface):
         """Overrides the generic dummy function for getting
         the signal strength dictionary"""
-        clients = self.get_clients_list()
+        clients = self.get_clients_list(interface)
         ss_dict = {}
         for client in clients:
-            new_value = self.get_ss(client)
+            new_value = self.get_ss(client, interface)
             ss_dict.update(new_value)
         return ss_dict
 
@@ -113,21 +123,21 @@ class DdwrtRouter(Router):
         else:
             return []
 
-    def get_ss(self, mac):
+    def get_ss(self, mac, interface):
         """Only called internally from get_ss_dict
         Takes a MAC address string
         Returns a dict with a MAC and its RSSI value"""
 
         try:
-            output = self.connection.run(self.wl_command + " rssi " + mac, hide=True)
+            output = self.connection.run(self.wl_command + " -i " + interface + " rssi " + mac, hide=True)
             return {mac: output.stdout.strip().split()[-1]}
         except invoke.exceptions.UnexpectedExit:
             return {mac: None}
 
-    def get_clients_list(self):
+    def get_clients_list(self, interface):
         """Gets the list of connected clients from the router
         Uses parse_wl_output to turn the wl output to a list"""
-        response = self.connection.run(self.wl_command + " assoclist", hide=True)
+        response = self.connection.run(self.wl_command + " -i " + interface + " assoclist", hide=True)
         return self.parse_wl_output(response)
 
 
@@ -137,6 +147,7 @@ class Dslac55uRouter(Router):
         Router.__init__(self, routerconfig)
         self.supported_protocols.remove("telnet")
         self.supported_protocols.remove("http")
+        self.wireless_interfaces = ["2g", "5g"]
         self.connect()
 
     def __str__(self):
@@ -144,15 +155,17 @@ class Dslac55uRouter(Router):
 
     def update(self):
         ate_output = self.connection.run("ATE show_stainfo", hide=True, warn=True).stdout
-        self.ss_dict = self.ate_output_ss(ate_output, "2.4")
-        self.ss_dict_5ghz = self.ate_output_ss(ate_output, "5")
+        self.ss_dict = {}
+        for interface in self.wireless_interfaces:
+            self.ss_dict.update({interface: self.ate_output_ss(ate_output, interface)})
+        #self.ss_dict.update({"5g": self.ate_output_ss(ate_output, "5")})
 
     def ate_output_ss(self, ate_output, band):
         """Returns a dict with a MAC and its signal strength"""
         lines = ate_output.strip().splitlines()
-        if "2.4 GHz radio is disabled" in lines and band == "2.4":
+        if "2.4 GHz radio is disabled" in lines and band == "2g":
             return {}
-        elif "5 GHz radio is disabled" in lines and band == "5":
+        elif "5 GHz radio is disabled" in lines and band == "5g":
             return {}
         else:
             #print(lines)
@@ -161,14 +174,14 @@ class Dslac55uRouter(Router):
             end = 0
             for index, line in enumerate(lines):
                 if line == "----------------------------------------":
-                    if index == 6 and band == "2.4":
+                    if index == 6 and band == "2g":
                         start = index + 2
-                    elif index > 6 and band == "5":
+                    elif index > 6 and band == "5g":
                         start = index + 2
-                elif line == "" and lines[index + 1] == "" and band == "2.4":
+                elif line == "" and lines[index + 1] == "" and band == "2g":
                     end = index - 1
                     break
-                elif index == len(lines) - 1 and band == "5":
+                elif index == len(lines) - 1 and band == "5g":
                     end = index
             devlines = []
             ss_dict = {}
@@ -182,4 +195,3 @@ class Dslac55uRouter(Router):
                     except IndexError:
                         print(devlines)
             return ss_dict
-            #return lines[start] + ", last: " + lines[end]
