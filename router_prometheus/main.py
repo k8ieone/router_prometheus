@@ -33,6 +33,7 @@ def load_main_config():
         print("Config directory already exists")
     except PermissionError:
         print("Can't create the config directory - premission denied")
+        sys.exit(1)
     except OSError:
         print("Config directory couldn't be created because of a different error")
         sys.exit(1)
@@ -62,6 +63,7 @@ def load_mapping_config():
         with open(MAPPING_CONFIG_LOCATION, "r", encoding="utf-8") as mapping_config:
             return yaml.safe_load(mapping_config)
     except FileNotFoundError:
+        print("Mapping config does not exist, mapping disabled...")
         return None
 
 
@@ -73,8 +75,8 @@ def create_main_config():
     try:
         with open(MAIN_CONFIG_LOCATION, "w", encoding="utf-8") as main_config:
             yaml.dump(config, main_config)
-    except:
-        print("Main config file creation failed!")
+    except FileNotFoundError:
+        print("Config directory does not exist. Couldn't create the main config file!")
         sys.exit(1)
     print("Config file created in: " + MAIN_CONFIG_LOCATION)
     print("Exitting...")
@@ -88,8 +90,8 @@ def create_routers_config():
     try:
         with open(ROUTERS_CONFIG_LOCATION, "w", encoding="utf-8") as routers_config:
             yaml.dump(routers, routers_config)
-    except:
-        print("Routers config file creation failed!")
+    except FileNotFoundError:
+        print("Config directory does not exist. Couldn't create the routers config file!")
         sys.exit(1)
     print("Config file created in: " + ROUTERS_CONFIG_LOCATION)
     print("Exitting...")
