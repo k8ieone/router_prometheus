@@ -14,12 +14,10 @@ from prometheus_client.core import GaugeMetricFamily, REGISTRY
 from . import router
 from . import exceptions
 
-DATA_DIRECTORY = os.getcwd()
-if os.getcwd() != "/":
-    DATA_DIRECTORY = os.getcwd() + "/"
-MAIN_CONFIG_LOCATION = DATA_DIRECTORY + "config/config.yml"
-ROUTERS_CONFIG_LOCATION = DATA_DIRECTORY + "config/routers.yml"
-MAPPING_CONFIG_LOCATION = DATA_DIRECTORY + "config/mapping.yml"
+CONFIG_DIRECTORY = os.getcwd() + "/config/"
+MAIN_CONFIG_LOCATION = CONFIG_DIRECTORY + "config.yml"
+ROUTERS_CONFIG_LOCATION = CONFIG_DIRECTORY + "routers.yml"
+MAPPING_CONFIG_LOCATION = CONFIG_DIRECTORY + "mapping.yml"
 
 
 def load_main_config():
@@ -28,7 +26,7 @@ def load_main_config():
     it executes create_main_config()
     if it finds it, it reads it and returns it as a dict"""
     try:
-        os.mkdir(os.getcwd() + "config")
+        os.mkdir(CONFIG_DIRECTORY)
     except FileExistsError:
         print("Config directory already exists")
     except OSError([30]):
