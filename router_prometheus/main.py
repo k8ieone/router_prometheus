@@ -15,6 +15,8 @@ from . import router
 from . import exceptions
 
 CONFIG_DIRECTORY = os.getcwd() + "/config/"
+if os.getcwd() == "/":
+    CONFIG_DIRECTORY = "/config/"
 MAIN_CONFIG_LOCATION = CONFIG_DIRECTORY + "config.yml"
 ROUTERS_CONFIG_LOCATION = CONFIG_DIRECTORY + "routers.yml"
 MAPPING_CONFIG_LOCATION = CONFIG_DIRECTORY + "mapping.yml"
