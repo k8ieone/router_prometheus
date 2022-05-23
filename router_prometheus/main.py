@@ -31,9 +31,8 @@ def load_main_config():
         os.mkdir(CONFIG_DIRECTORY)
     except FileExistsError:
         print("Config directory already exists")
-    except OSError([30]):
-        print("Config directory couldn't be created because the filesystem is read-only")
-        sys.exit(1)
+    except PermissionError:
+        print("Can't create the config directory - premission denied")
     except OSError:
         print("Config directory couldn't be created because of a different error")
         sys.exit(1)
