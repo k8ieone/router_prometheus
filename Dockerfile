@@ -10,7 +10,7 @@ WORKDIR /build
 
 RUN $py -m pip install setuptools wheel
 
-RUN apt install -y gcc make rustc cargo libffi-dev $py-dev
+RUN apt install -y gcc make rustc cargo libffi-dev libssl-dev $py-dev
 
 RUN $py -m venv /venv
 #ENV PATH=/venv/bin:$PATH
