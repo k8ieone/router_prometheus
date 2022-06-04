@@ -1,5 +1,6 @@
 FROM alpine:edge AS builder
 ARG py=python3
+ENV py=$py
 
 ADD . /build
 WORKDIR /build
@@ -29,4 +30,4 @@ RUN $py -m ensurepip && $py -m pip install --upgrade pip  && $py -m pip install 
 
 # The port instide the container must remain set to 8080 in order for this healthcheck to work
 HEALTHCHECK --interval=60s --timeout=5s CMD curl -f http://localhost:8080/ || exit 1
-CMD [$py, "-u", "-m", "router_prometheus"]
+CMD [""$py", "-u", "-m", "router_prometheus"]
