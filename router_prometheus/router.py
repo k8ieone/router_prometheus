@@ -12,6 +12,7 @@ class Router:
         self.address = routerconfig[self.name]["address"]
         self.protocol = routerconfig[self.name]["transport"]["protocol"]
         self.username = routerconfig[self.name]["transport"]["username"]
+        self.connection = None
         try:
             self.password = routerconfig[self.name]["transport"]["password"]
         except KeyError:
@@ -51,8 +52,14 @@ class Router:
         if self.protocol == "telnet":
             pass
         elif self.protocol == "ssh":
-            self.connection = fabric.Connection(host=self.address, user=self.username, connect_kwargs={"password": self.password, "timeout": 30.0})
-            # self.connection.transport.set_keepalive(5)
+            if self.connection is None:
+                print(self.name + ": This is a new connection")
+                self.connection = fabric.Connection(host=self.address, user=self.username, connect_kwargs={"password": self.password, "timeout": 30.0})
+                # self.connection.transport.set_keepalive(5)
+            else:
+                print(self.name + ": Closing and opening connection...")
+                self.connection.close()
+                self.connection.open()
             result = self.connection.run("hostname", hide=True)
             if result.ok:
                 print(self.name + ": Connection is OK, got hostname " + result.stdout.strip())
