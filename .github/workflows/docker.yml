@@ -1,9 +1,7 @@
-name: "Build Docker image"
+name: "Build Release Docker image"
 
 on:
   push:
-    branches:
-      - 'master'
     tags:
       - 'v*.*.*'
 
