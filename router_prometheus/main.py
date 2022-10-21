@@ -86,7 +86,27 @@ def create_main_config():
 def create_routers_config():
     """Creates an example routers config file"""
     print("Creating an example routers config file...")
-    routers = {'router1': {'address': 'ip', 'backend': 'dsl-ac55U', 'transport': {'protocol': 'telnet', 'username': 'admin', 'password': 'admin'}}, 'router2': {'address': 'ip', 'backend': 'dd-wrt', 'transport': {'protocol': 'ssh', 'username': 'root', 'password': 'admin'}}, 'router3': {'address': 'ip', 'backend': 'dd-wrt', 'transport': {'protocol': 'ssh', 'username': 'root', 'use_keys': True}}}
+    routers = {'router1':
+               {'address': 'ip',
+                'backend': 'dsl-ac55U',
+                'transport':
+                {'protocol': 'telnet',
+                 'username': 'admin',
+                 'password': 'admin'}},
+               'router2':
+               {'address': 'ip',
+                'backend': 'dd-wrt',
+                'transport':
+                {'protocol': 'ssh',
+                 'username': 'root',
+                 'password': 'admin'}},
+               'router3':
+               {'address': 'ip',
+                'backend': 'dd-wrt',
+                'transport':
+                {'protocol': 'ssh',
+                 'username': 'root',
+                 'use_keys': True}}}
     try:
         with open(ROUTERS_CONFIG_LOCATION, "w", encoding="utf-8") as routers_config:
             yaml.dump(routers, routers_config)
@@ -113,7 +133,8 @@ def create_router_list(routers_dict):
         except socket.gaierror:
             print("Could not resolve address: " + routers_dict[rtr]["address"])
         except exceptions.UnsupportedProtocol:
-            print("Router " + rtr + " does not support the " + routers_dict[rtr]["transport"]["protocol"] + " protocol")
+            print("Router " + rtr + " does not support the " +
+                  routers_dict[rtr]["transport"]["protocol"] + " protocol")
         except exceptions.MissingCommand:
             print(rtr + " is missing both the 'wl' and 'wl_atheros' commands")
         except TimeoutError:
@@ -154,7 +175,8 @@ class RouterCollector:
             yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_' + interface, 'Number of connected clients', value=len(hosts.keys()))
             if self.rtr.channels[index] is not None:
                 yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_channel_' + interface, 'Current wireless channel', value=self.rtr.channels[index])
-            ss_gauge = GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_client_signal_' + interface, 'Client Signal Strength', labels=["address"])
+            ss_gauge = GaugeMetricFamily(self.rtr.name.replace(
+                "-", "_").lower() + '_client_signal_' + interface, 'Client Signal Strength', labels=["address"])
             for host in list(hosts.keys()):
                 # These try-except-else blocks are only necessary because of
                 # prometheus disallowing the first character to be a number
@@ -163,7 +185,7 @@ class RouterCollector:
                 except ValueError:
                     name = host.replace(":", "_")
                 else:
-                    name = "m_" +  host.replace(":", "_")
+                    name = "m_" + host.replace(":", "_")
                 ss_gauge.add_metric(labels=[name], value=hosts[host])
             yield ss_gauge
         # i = InfoMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_rssi', 'List of clients and their RSSIs')
