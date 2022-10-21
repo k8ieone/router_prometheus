@@ -3,11 +3,11 @@ import sys
 import logging
 import signal
 import socket
-
-import yaml
-import paramiko
-from prometheus_client import start_http_server
-from prometheus_client.core import GaugeMetricFamily, REGISTRY
+ 
+import yaml # type: ignore
+import paramiko # type: ignore
+from prometheus_client import start_http_server # type: ignore
+from prometheus_client.core import GaugeMetricFamily, REGISTRY # type: ignore
 # Todo: Figure out how to unregister the default collectors
 
 # Custom modules import
