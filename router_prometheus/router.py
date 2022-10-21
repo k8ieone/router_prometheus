@@ -1,6 +1,6 @@
-import fabric
-import invoke
-import paramiko
+import fabric # type: ignore
+import invoke # type: ignore
+import paramiko # type: ignore
 
 from . import exceptions
 
