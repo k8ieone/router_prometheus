@@ -6,7 +6,7 @@ on:
   workflow_dispatch: # allows for manual invocation
 
 jobs:
-  gcr-cleaner:
+  retention-policy:
     runs-on: 'ubuntu-latest'
     steps:
       - name: Delete old images
