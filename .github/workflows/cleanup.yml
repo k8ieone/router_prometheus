@@ -9,19 +9,11 @@ jobs:
   gcr-cleaner:
     runs-on: 'ubuntu-latest'
     steps:
-      # configure based on your registry
-      - uses: 'docker/login-action@v2'
+      - name: Delete old images
+        uses: snok/container-retention-policy@v1
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
-
-      # customize based on the gcr-cleaner flags
-      - uses: 'docker://us-docker.pkg.dev/gcr-cleaner/gcr-cleaner/gcr-cleaner-cli'
-        env:
-          GCRCLEANER_LOG: debug
-        with:
-          args: >-
-            -repo=ghcr.io/${{ github.actor }}/router_prometheus
-            -grace=48h
-            -recursive
+          image-names: router_prometheus
+          cut-off: Two days ago UTC
+          untagged-only: true
+          account-type: personal
+          token: ${{ secrets.GHCR_TOKEN }}
