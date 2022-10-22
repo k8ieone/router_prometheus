@@ -24,3 +24,4 @@ jobs:
           args: >-
             -repo=ghcr.io/${{ github.actor }}/router_prometheus
             -grace=48h
+            -recursive
