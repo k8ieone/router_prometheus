@@ -2,8 +2,8 @@ name: Lint
 
 on:
   push:
-    branches:
-      - 'master'
+    paths:
+      - '**.py'
 
 jobs:
   mypy:
