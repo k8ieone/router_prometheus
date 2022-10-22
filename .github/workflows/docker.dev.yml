@@ -2,8 +2,10 @@ name: "Build Development Docker image"
 
 on:
   push:
-    branches:
-      - 'master'
+    paths:
+      - '**.py'
+      - 'Dockerfile.dev'
+  workflow_dispatch:
 
 jobs:
   docker-dev:
