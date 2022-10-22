@@ -1,0 +1,24 @@
+name: 'gcr-cleaner'
+
+on:
+  schedule:
+    - cron: '0 0 */14 * *' # runs bi-weekly
+  workflow_dispatch: # allows for manual invocation
+
+jobs:
+  gcr-cleaner:
+    runs-on: 'ubuntu-latest'
+    steps:
+      # configure based on your registry
+      - uses: 'docker/login-action@v2'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      # customize based on the gcr-cleaner flags
+      - uses: 'docker://us-docker.pkg.dev/gcr-cleaner/gcr-cleaner/gcr-cleaner-cli'
+        with:
+          args: >-
+            -repo=ghcr.io/k8ieone/router_prometheus
+            -grace=48h
