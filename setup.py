@@ -1,4 +1,4 @@
-import setuptools # type: ignore
+import setuptools  # type: ignore
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -22,8 +22,8 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(include=["router_prometheus"]),
     entry_points={
-    "console_scripts": [
-        "router_prometheus = router_prometheus.main:main"
+        "console_scripts": [
+            "router_prometheus = router_prometheus.main:main"
         ]
     },
     install_requires=["PyYAML", "fabric", "prometheus_client"],
