@@ -18,6 +18,8 @@ jobs:
 
       # customize based on the gcr-cleaner flags
       - uses: 'docker://us-docker.pkg.dev/gcr-cleaner/gcr-cleaner/gcr-cleaner-cli'
+        env:
+          GCRCLEANER_LOG: debug
         with:
           args: >-
             -repo=ghcr.io/${{ github.actor }}/router_prometheus
