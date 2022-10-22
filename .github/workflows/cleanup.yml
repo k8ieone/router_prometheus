@@ -1,4 +1,4 @@
-name: 'gcr-cleaner'
+name: "Clean old container images"
 
 on:
   schedule:
@@ -20,5 +20,5 @@ jobs:
       - uses: 'docker://us-docker.pkg.dev/gcr-cleaner/gcr-cleaner/gcr-cleaner-cli'
         with:
           args: >-
-            -repo=ghcr.io/k8ieone/router_prometheus
+            -repo=ghcr.io/${{ github.actor }}/router_prometheus
             -grace=48h
