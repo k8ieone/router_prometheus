@@ -1,8 +1,9 @@
-import fabric # type: ignore
-import invoke # type: ignore
-import paramiko # type: ignore
+import fabric  # type: ignore
+import invoke  # type: ignore
+import paramiko  # type: ignore
 
 from . import exceptions
+
 
 class Router:
     """Generic router class"""
@@ -193,7 +194,7 @@ class Dslac55uRouter(Router):
         for interface in self.wireless_interfaces:
             self.ss_dicts.append(self.ate_output_ss(ate_output, interface))
             self.channels.append(self.ate_output_channel(ate_output, interface))
-        #self.ss_dict.update({"5g": self.ate_output_ss(ate_output, "5")})
+        # self.ss_dict.update({"5g": self.ate_output_ss(ate_output, "5")})
 
     def ate_output_ss(self, ate_output, band):
         """Returns a dict with a MAC and its signal strength"""
@@ -203,8 +204,8 @@ class Dslac55uRouter(Router):
         elif "5 GHz radio is disabled" in lines and band == "5g":
             return {}
         else:
-            #print(lines)
-            #print("^^^^^^^^^^^^^^^^^^^^^^^ raw lines for " + band)
+            # print(lines)
+            # print("^^^^^^^^^^^^^^^^^^^^^^^ raw lines for " + band)
             start = 0
             end = 0
             for index, line in enumerate(lines):

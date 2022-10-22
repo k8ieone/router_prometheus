@@ -3,12 +3,12 @@ import sys
 import logging
 import signal
 import socket
- 
-import yaml # type: ignore
-import paramiko # type: ignore
-from prometheus_client import start_http_server # type: ignore
-from prometheus_client.core import GaugeMetricFamily, REGISTRY # type: ignore
-# Todo: Figure out how to unregister the default collectors
+
+import yaml  # type: ignore
+import paramiko  # type: ignore
+from prometheus_client import start_http_server  # type: ignore
+from prometheus_client.core import GaugeMetricFamily, REGISTRY  # type: ignore
+# TODO: Figure out how to unregister the default collectors
 
 # Custom modules import
 from . import router
@@ -35,7 +35,7 @@ def load_main_config():
         print("Can't create the config directory - premission denied")
         sys.exit(1)
     except OSError:
-        print("Config directory couldn't be created because of a different error")
+        print("Config directory creation failed because of a different error")
         sys.exit(1)
     try:
         with open(MAIN_CONFIG_LOCATION, "r", encoding="utf-8") as main_config:
@@ -49,7 +49,9 @@ def load_routers_config():
     """Same as load_main_config() but with the routers config and without
     trying to create the config directory"""
     try:
-        with open(ROUTERS_CONFIG_LOCATION, "r", encoding="utf-8") as routers_config:
+        with open(ROUTERS_CONFIG_LOCATION,
+                  "r",
+                  encoding="utf-8") as routers_config:
             return yaml.safe_load(routers_config)
     except FileNotFoundError:
         create_routers_config()
@@ -60,7 +62,9 @@ def load_mapping_config():
     """Same as load_routers_config() but with the mapping config and without
     creating the file"""
     try:
-        with open(MAPPING_CONFIG_LOCATION, "r", encoding="utf-8") as mapping_config:
+        with open(MAPPING_CONFIG_LOCATION,
+                  "r",
+                  encoding="utf-8") as mapping_config:
             return yaml.safe_load(mapping_config)
     except FileNotFoundError:
         print("Mapping config does not exist, mapping disabled...")
@@ -76,7 +80,7 @@ def create_main_config():
         with open(MAIN_CONFIG_LOCATION, "w", encoding="utf-8") as main_config:
             yaml.dump(config, main_config)
     except FileNotFoundError:
-        print("Config directory does not exist. Couldn't create the main config file!")
+        print("Config directory not found. Couldn't create the main config")
         sys.exit(1)
     print("Config file created in: " + MAIN_CONFIG_LOCATION)
     print("Exitting...")
@@ -108,10 +112,12 @@ def create_routers_config():
                  'username': 'root',
                  'use_keys': True}}}
     try:
-        with open(ROUTERS_CONFIG_LOCATION, "w", encoding="utf-8") as routers_config:
+        with open(ROUTERS_CONFIG_LOCATION,
+                  "w",
+                  encoding="utf-8") as routers_config:
             yaml.dump(routers, routers_config)
     except FileNotFoundError:
-        print("Config directory does not exist. Couldn't create the routers config file!")
+        print("Config directory not found. Couldn't create the routers config")
         sys.exit(1)
     print("Config file created in: " + ROUTERS_CONFIG_LOCATION)
     print("Exitting...")
