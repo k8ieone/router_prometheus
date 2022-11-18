@@ -94,22 +94,19 @@ def create_routers_config():
                {'address': 'ip',
                 'backend': 'dsl-ac55U',
                 'transport':
-                {'protocol': 'telnet',
-                 'username': 'admin',
+                {'username': 'admin',
                  'password': 'admin'}},
                'router2':
                {'address': 'ip',
                 'backend': 'dd-wrt',
                 'transport':
-                {'protocol': 'ssh',
-                 'username': 'root',
+                {'username': 'root',
                  'password': 'admin'}},
                'router3':
                {'address': 'ip',
                 'backend': 'dd-wrt',
                 'transport':
-                {'protocol': 'ssh',
-                 'username': 'root',
+                {'username': 'root',
                  'use_keys': True}}}
     try:
         with open(ROUTERS_CONFIG_LOCATION,
@@ -138,9 +135,6 @@ def create_router_list(routers_dict):
             print("Error connecting to router " + rtr)
         except socket.gaierror:
             print("Could not resolve address: " + routers_dict[rtr]["address"])
-        except exceptions.UnsupportedProtocol:
-            print("Router " + rtr + " does not support the " +
-                  routers_dict[rtr]["transport"]["protocol"] + " protocol")
         except exceptions.MissingCommand:
             print(rtr + " is missing both the 'wl' and 'wl_atheros' commands")
         except TimeoutError:
