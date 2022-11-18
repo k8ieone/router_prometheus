@@ -80,7 +80,6 @@ class DdwrtRouter(Router):
         Router.__init__(self, routerconfig)
         self.supported_protocols.remove("telnet")
         self.supported_protocols.remove("http")
-        self.supported_features.remove("rxtx")
         self.connect()
         if self.protocol == "ssh":
             try:
@@ -101,12 +100,14 @@ class DdwrtRouter(Router):
     def update(self):
         self.ss_dicts = []
         self.channels = []
-        self.interface_tx = []
         self.interface_rx = []
+        self.interface_tx = []
         self.wireless_interfaces = self.get_interfaces()
         for interface in self.wireless_interfaces:
             self.ss_dicts.append(self.get_ss_dict(interface))
             self.channels.append(self.get_channel(interface))
+            self.interface_rx.append(self.get_interface_rxtx(interface, "rx"))
+            self.interface_tx.append(self.get_interface_rxtx(interface, "tx"))
 
     def get_channel(self, interface):
         """Returns the interface's current channel"""
@@ -144,6 +145,11 @@ class DdwrtRouter(Router):
             new_value = self.get_ss(client, interface)
             ss_dict.update(new_value)
         return ss_dict
+
+    def get_interface_rxtx(self, interface, selector):
+        """Takes an interface and selector (either rx or tx)
+        Returns the number of bytes received/transmitted (taken from sysfs)"""
+        return self.connection.run("cat /sys/class/net/" + interface + "/statistics/" + selector + "_bytes", hide=True).stdout.strip()
 
     def parse_wl_output(self, output):
         """Only called internally from get_clients_list
