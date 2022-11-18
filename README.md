@@ -12,17 +12,15 @@
 
 ## Collected metrics
 
-metric, description, required feature
 | Metric | Description | Required feature |
 | :-------------- | :-------------: | -------------: |
 | `ROUTER_clients_connected_INTERFACE`    | Number of devices connected to `INTERFACE`. | `signal` |
 | `ROUTER_client_signal_INTERFACE_DEVICE` | Current [signal strength](https://www.securedgenetworks.com/blog/wifi-signal-strength#what-is-a-good-wifi-signal-stength) (in dBm) for each connected `DEVICE`. | `signal` |
 | `ROUTER_channel_INTERFACE` | `INTERFACE`'s [channel](https://en.wikipedia.org/wiki/List_of_WLAN_channels). | `channel` |
-| `ROUTER_rx_INTERFACE`, `ROUTER_tx_INTERFACE` | Total number of bytes received/transmitted on an `INTERFACE`. Taken from `/sys/class/net/INTERFACE/statistics/rx_bytes`. | `rxtx` |
+| `ROUTER_rx_INTERFACE`, `ROUTER_tx_INTERFACE` | Total number of bytes received/transmitted on a wireless `INTERFACE`. Read from `/sys/class/net/INTERFACE/statistics/rx_bytes`. | `rxtx` |
 
-## Backends
+## Available backends
 
-backend, description, available features
 | Backend | Description | Available features |
 | :-------------- | :-------------: | -------------: |
 | `dd-wrt`    | Should support all routers running DD-WRT. | `signal`, `channel`, `rxtx` |
