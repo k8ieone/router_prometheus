@@ -177,26 +177,21 @@ class RouterCollector:
         """This is the function internally called by prometheus_client"""
         self.rtr.update()
         for index, interface in enumerate(self.rtr.wireless_interfaces):
-            hosts = translate_macs(self.rtr.ss_dicts[index])
-            yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_' + interface, 'Number of connected clients', value=len(hosts.keys()))
+            clients = translate_macs(self.rtr.ss_dicts[index])
+            router_name = self.rtr.name.replace("-", "_").lower()
+            yield GaugeMetricFamily(router_name + '_clients_connected_' + interface, 'Number of connected clients', value=len(clients.keys()))
             if self.rtr.channels[index] is not None:
-                yield GaugeMetricFamily(self.rtr.name.replace("-", "_").lower() + '_channel_' + interface, 'Current wireless channel', value=self.rtr.channels[index])
-            ss_gauge = GaugeMetricFamily(self.rtr.name.replace(
-                "-", "_").lower() + '_client_signal_' + interface, 'Client Signal Strength', labels=["address"])
-            for host in list(hosts.keys()):
-                # These try-except-else blocks are only necessary because of
-                # prometheus disallowing the first character to be a number
-                try:
-                    int(host[0])
-                except ValueError:
-                    name = host.replace(":", "_")
+                yield GaugeMetricFamily(router_name + '_channel_' + interface, 'Current wireless channel', value=self.rtr.channels[index])
+            signal_gauge = GaugeMetricFamily(router_name + '_client_signal_' + interface, 'Client Signal Strength', labels=["address"])
+            for client in list(clients.keys()):
+                # This cleans the addresses for prometheus_client
+                # prometheus disallows the first character to be a number
+                if client[0].isnumeric():
+                    name = "m_" + client.replace(":", "_")
                 else:
-                    name = "m_" + host.replace(":", "_")
-                ss_gauge.add_metric(labels=[name], value=hosts[host])
-            yield ss_gauge
-        # i = InfoMetricFamily(self.rtr.name.replace("-", "_").lower() + '_clients_rssi', 'List of clients and their RSSIs')
-        # i.add_metric(value={name: hosts[host]}, labels="signal")
-        # yield i
+                    name = client.replace(":", "_")
+                signal_gauge.add_metric(labels=[name], value=clients[client])
+            yield signal_gauge
 
 
 def main():
