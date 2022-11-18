@@ -11,15 +11,22 @@
  - [X] Docker container
 
 ## Collected metrics
- - [X] Number of connected WiFi clients
- - [X] Clients' MAC addresses (can be mapped to names) and their signal strength
-   - [X] DSL-AC55U reports bands (2.4 GHz and 5 GHz) separately
-   - [X] DD-WRT reports each wireless interface separately
- - [X] Current channel
-   - DSL-AC55U still reports current channel even when the radio is disabled by timer
-     - When disabled manually, the radio correctly shows itself as disabled
-   - When the radio is off, the metric should be gone
- - [X] Total number of bytes RX/TX
+
+metric, description, required feature
+| Metric | Description | Required feature |
+| :-------------- | :-------------: | -------------: |
+| `ROUTER_clients_connected_INTERFACE`    | Number of devices connected to `INTERFACE`. | `signal` |
+| `ROUTER_client_signal_INTERFACE_DEVICE` | Current [signal strength](https://www.securedgenetworks.com/blog/wifi-signal-strength#what-is-a-good-wifi-signal-stength) (in dBm) for each connected `DEVICE`. | `signal` |
+| `ROUTER_channel_INTERFACE` | `INTERFACE`'s [channel](https://en.wikipedia.org/wiki/List_of_WLAN_channels). | `channel` |
+| `ROUTER_rx_INTERFACE`, `ROUTER_tx_INTERFACE` | Total number of bytes received/transmitted on an `INTERFACE`. Taken from `/sys/class/net/INTERFACE/statistics/rx_bytes`. | `rxtx` |
+
+## Backends
+
+backend, description, available features
+| Backend | Description | Available features |
+| :-------------- | :-------------: | -------------: |
+| `dd-wrt`    | Should support all routers running DD-WRT. | `signal`, `channel`, `rxtx` |
+| `dsl-ac55u` | Only supports the Asus DSL-AC55U | `signal`, `channel`, `rxtx` |
 
 ## Known issues
  - When a command gets stuck, it hangs the whole progam indeffinitely (caused by [this issue](https://github.com/fabric/fabric/issues/2197))
