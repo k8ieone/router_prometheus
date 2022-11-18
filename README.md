@@ -19,7 +19,7 @@
    - DSL-AC55U still reports current channel even when the radio is disabled by timer
      - When disabled manually, the radio correctly shows itself as disabled
    - When the radio is off, the metric should be gone
- - [ ] Total number of bytes RX/TX
+ - [X] Total number of bytes RX/TX
 
 ## Known issues
  - When a command gets stuck, it hangs the whole progam indeffinitely (caused by [this issue](https://github.com/fabric/fabric/issues/2197))
