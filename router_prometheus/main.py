@@ -156,7 +156,7 @@ def translate_macs(rssi_dict):
     returns another dict"""
     mapping = load_mapping_config()
     translated_dict = {}
-    if rssi_dict is not None:
+    if rssi_dict is not None and mapping is not None:
         for mac in rssi_dict.keys():
             if mac in mapping:
                 translated_dict.update({mapping[mac]: rssi_dict[mac]})
