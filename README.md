@@ -24,7 +24,7 @@
 ## Known issues
  - When a command gets stuck, it hangs the whole progam indeffinitely (caused by [this issue](https://github.com/fabric/fabric/issues/2197))
    - Same goes for losing connection
- - I should figure out a way to have the number of devices metric be separate for each band without having one constantly at 0 for 2.4 GHz routers only
+ - Something makes it crash sometimes and I'm not sure why
 
 ## Config file markup
 
