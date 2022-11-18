@@ -37,7 +37,8 @@ config.yml:
 ```yml
 port: 8080
 address: 127.0.0.1
-debug: yes
+debug: true
+cpython_metrics: false
 ```
 
 routers.yml:
