@@ -176,22 +176,26 @@ class RouterCollector:
     def collect(self):
         """This is the function internally called by prometheus_client"""
         self.rtr.update()
+        router_name = self.rtr.name.replace("-", "_").lower()
         for index, interface in enumerate(self.rtr.wireless_interfaces):
-            clients = translate_macs(self.rtr.ss_dicts[index])
-            router_name = self.rtr.name.replace("-", "_").lower()
-            yield GaugeMetricFamily(router_name + '_clients_connected_' + interface, 'Number of connected clients', value=len(clients.keys()))
-            if self.rtr.channels[index] is not None:
+            if "signal" in self.rtr.supported_features:
+                clients = translate_macs(self.rtr.ss_dicts[index])
+                yield GaugeMetricFamily(router_name + '_clients_connected_' + interface, 'Number of connected clients', value=len(clients.keys()))
+                signal_gauge = GaugeMetricFamily(router_name + '_client_signal_' + interface, 'Client Signal Strength', labels=["address"])
+                for client in list(clients.keys()):
+                    # This cleans the addresses for prometheus_client
+                    # prometheus disallows the first character to be a number
+                    if client[0].isnumeric():
+                        name = "m_" + client.replace(":", "_")
+                    else:
+                        name = client.replace(":", "_")
+                    signal_gauge.add_metric(labels=[name], value=clients[client])
+                yield signal_gauge
+            if "channel" in self.rtr.supported_features and self.rtr.channels[index] is not None:
                 yield GaugeMetricFamily(router_name + '_channel_' + interface, 'Current wireless channel', value=self.rtr.channels[index])
-            signal_gauge = GaugeMetricFamily(router_name + '_client_signal_' + interface, 'Client Signal Strength', labels=["address"])
-            for client in list(clients.keys()):
-                # This cleans the addresses for prometheus_client
-                # prometheus disallows the first character to be a number
-                if client[0].isnumeric():
-                    name = "m_" + client.replace(":", "_")
-                else:
-                    name = client.replace(":", "_")
-                signal_gauge.add_metric(labels=[name], value=clients[client])
-            yield signal_gauge
+            if "rxtx" in self.rtr.supported_features:
+                yield GaugeMetricFamily(router_name + '_rx_' + interface, 'Bytes received', value=self.rtr.interface_rx[index])
+                yield GaugeMetricFamily(router_name + '_tx_' + interface, 'Bytes transmitted', value=self.rtr.interface_tx[index])
 
 
 def main():

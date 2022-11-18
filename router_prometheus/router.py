@@ -27,9 +27,12 @@ class Router:
         else:
             self.use_keys = routerconfig[self.name]["transport"]["use_keys"]
         self.supported_protocols = ["telnet", "ssh", "http"]
+        self.supported_features = ["signal", "channel", "rxtx"]
         self.ss_dicts = []
         self.channels = []
         self.wireless_interfaces = []
+        self.interface_tx = []
+        self.interface_rx = []
 
     def __del__(self):
         print("Called " + self.name + "'s destructor")
@@ -42,7 +45,7 @@ class Router:
         return "router " + self.name + " at " + self.address + " using " + self.protocol
 
     def update(self):
-        self.ss_dicts = {}
+        pass
 
     def connect(self):
         """Connects to the router, throws exceptions if it fails somehow"""
@@ -77,6 +80,7 @@ class DdwrtRouter(Router):
         Router.__init__(self, routerconfig)
         self.supported_protocols.remove("telnet")
         self.supported_protocols.remove("http")
+        self.supported_features.remove("rxtx")
         self.connect()
         if self.protocol == "ssh":
             try:
@@ -97,14 +101,12 @@ class DdwrtRouter(Router):
     def update(self):
         self.ss_dicts = []
         self.channels = []
-        try:
-            self.wireless_interfaces = self.get_interfaces()
-            for interface in self.wireless_interfaces:
-                self.ss_dicts.append(self.get_ss_dict(interface))
-                self.channels.append(self.get_channel(interface))
-        except paramiko.ssh_exception.SSHException:
-            self.connect()
-            self.update()
+        self.interface_tx = []
+        self.interface_rx = []
+        self.wireless_interfaces = self.get_interfaces()
+        for interface in self.wireless_interfaces:
+            self.ss_dicts.append(self.get_ss_dict(interface))
+            self.channels.append(self.get_channel(interface))
 
     def get_channel(self, interface):
         """Returns the interface's current channel"""
@@ -181,6 +183,7 @@ class Dslac55uRouter(Router):
         Router.__init__(self, routerconfig)
         self.supported_protocols.remove("telnet")
         self.supported_protocols.remove("http")
+        self.supported_features.remove("rxtx")
         self.wireless_interfaces = ["2g", "5g"]
         self.connect()
 
