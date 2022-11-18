@@ -1,6 +1,7 @@
 import fabric  # type: ignore
 import invoke  # type: ignore
 import paramiko  # type: ignore
+import json
 
 from . import exceptions
 
@@ -58,6 +59,15 @@ class Router:
         Returns the number of bytes received/transmitted (taken from sysfs)"""
         return self.connection.run("cat /sys/class/net/" + interface + "/statistics/" + selector + "_bytes", hide=True).stdout.strip()
 
+    def get_interfaces(self):
+        """Returns a list of wireless interfaces"""
+        interfaces = self.connection.run("ls /sys/class/net", hide=True).stdout.strip().split()
+        wireless_interfaces = []
+        for interface in interfaces:
+            if "wireless" in self.connection.run("ls /sys/class/net/" + interface, hide=True).stdout.strip():
+                wireless_interfaces.append(interface)
+        return wireless_interfaces
+
     def connect(self):
         """Connects to the router, throws exceptions if it fails somehow"""
         print("Connecting to " + str(self))
@@ -69,9 +79,9 @@ class Router:
             print(self.name + ": Closing and opening connection...")
             self.connection.close()
             self.connection.open()
-        result = self.connection.run("hostname", hide=True)
+        result = self.connection.run("echo", hide=True)
         if result.ok:
-            print(self.name + ": Connection is OK, got hostname " + result.stdout.strip())
+            print(self.name + ": Connection is OK!")
         else:
             raise Exception("Unable to connect using SSH")
 
@@ -115,16 +125,6 @@ class DdwrtRouter(Router):
                     return line.split()[1]
             return None
 
-    def get_interfaces(self):
-        """Returns a list of wireless interfaces
-        only called internally from the DD-WRT update() method"""
-        interfaces = self.connection.run("ls /sys/class/net", hide=True).stdout.strip().split()
-        wireless_interfaces = []
-        for interface in interfaces:
-            if "wireless" in self.connection.run("ls /sys/class/net/" + interface, hide=True).stdout.strip():
-                wireless_interfaces.append(interface)
-        return wireless_interfaces
-
     def get_ss_dict(self, interface):
         """Overrides the generic dummy function for getting
         the signal strength dictionary"""
@@ -165,6 +165,34 @@ class DdwrtRouter(Router):
         Uses parse_wl_output to turn the wl output to a list"""
         response = self.connection.run(self.wl_command + " -i " + interface + " assoclist", hide=True)
         return self.parse_wl_output(response)
+
+
+class UbntRouter(Router):
+    """Inherits from the generic router class and adds Ubiquiti-specific stuff"""
+
+    def __init__(self, routerconfig):
+        Router.__init__(self, routerconfig)
+        self.connect()
+        self.wireless_interfaces = self.get_interfaces()
+        # Workaround: wifi0 is a dummy interface, so we remove it
+        self.wireless_interfaces.remove("wifi0")
+
+    def __str__(self):
+        return "Ubiquiti " + Router.__str__(self)
+
+    def get_channel(self, interface):
+        """Returns the interface's current channel"""
+        output = self.connection.run("iwgetid -c " + interface, hide=True).stdout.strip().splitlines()
+        return output[0].split(":")[1]
+
+    def get_ss_dict(self, interface):
+        """Overrides the generic dummy function for getting
+        the signal strength dictionary"""
+        wstalist = json.loads(self.connection.run("wstalist", hide=True).stdout)
+        ss_dict = {}
+        for sta in wstalist:
+            ss_dict.update({sta.get("mac"): sta.get("signal")})
+        return ss_dict
 
 
 class Dslac55uRouter(Router):

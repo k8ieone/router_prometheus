@@ -126,6 +126,8 @@ def create_router_list(routers_dict):
     for rtr in routers_dict:
         if routers_dict[rtr]["backend"] == "dd-wrt":
             router_class = router.DdwrtRouter
+        elif routers_dict[rtr]["backend"] == "ubnt":
+            router_class = router.UbntRouter
         elif routers_dict[rtr]["backend"] == "dsl-ac55U":
             router_class = router.Dslac55uRouter
         try:

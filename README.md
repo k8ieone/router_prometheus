@@ -24,6 +24,7 @@
 | Backend | Description | Available features |
 | :-------------- | :-------------: | -------------: |
 | `dd-wrt`    | Should support all routers running [DD-WRT](https://dd-wrt.com/) | `signal`, `channel`, `rxtx` |
+| `ubnt`      | Should work on most Ubiquiti bridge devices | `signal`, `channel`, `rxtx` |
 | `dsl-ac55u` | Only supports the Asus DSL-AC55U | `signal`, `channel`, `rxtx` |
 
 ## Known issues
