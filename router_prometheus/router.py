@@ -11,7 +11,6 @@ class Router:
     def __init__(self, routerconfig):
         self.name = list(routerconfig)[0]
         self.address = routerconfig[self.name]["address"]
-        self.protocol = routerconfig[self.name]["transport"]["protocol"]
         self.username = routerconfig[self.name]["transport"]["username"]
         self.connection = None
         try:
@@ -45,6 +44,11 @@ class Router:
 
     def update(self):
         pass
+
+    def get_interface_rxtx(self, interface, selector):
+        """Takes an interface and selector (either rx or tx)
+        Returns the number of bytes received/transmitted (taken from sysfs)"""
+        return self.connection.run("cat /sys/class/net/" + interface + "/statistics/" + selector + "_bytes", hide=True).stdout.strip()
 
     def connect(self):
         """Connects to the router, throws exceptions if it fails somehow"""
@@ -134,11 +138,6 @@ class DdwrtRouter(Router):
             ss_dict.update(new_value)
         return ss_dict
 
-    def get_interface_rxtx(self, interface, selector):
-        """Takes an interface and selector (either rx or tx)
-        Returns the number of bytes received/transmitted (taken from sysfs)"""
-        return self.connection.run("cat /sys/class/net/" + interface + "/statistics/" + selector + "_bytes", hide=True).stdout.strip()
-
     def parse_wl_output(self, output):
         """Only called internally from get_clients_list
         Takes the raw output of wl assoclist and returns a list of MAC addresses"""
@@ -175,8 +174,7 @@ class Dslac55uRouter(Router):
 
     def __init__(self, routerconfig):
         Router.__init__(self, routerconfig)
-        self.supported_features.remove("rxtx")
-        self.wireless_interfaces = ["2g", "5g"]
+        self.wireless_interfaces = ["ra0", "rai0"]
         self.connect()
 
     def __str__(self):
@@ -186,12 +184,20 @@ class Dslac55uRouter(Router):
         ate_output = self.connection.run("ATE show_stainfo", hide=True, warn=True).stdout
         self.ss_dicts = []
         self.channels = []
+        self.interface_rx = []
+        self.interface_tx = []
         for interface in self.wireless_interfaces:
             self.ss_dicts.append(self.ate_output_ss(ate_output, interface))
             self.channels.append(self.ate_output_channel(ate_output, interface))
+            self.interface_rx.append(self.get_interface_rxtx(interface, "rx"))
+            self.interface_tx.append(self.get_interface_rxtx(interface, "tx"))
         # self.ss_dict.update({"5g": self.ate_output_ss(ate_output, "5")})
 
-    def ate_output_ss(self, ate_output, band):
+    def ate_output_ss(self, ate_output, interface):
+        if interface == "ra0":
+            band = "2g"
+        elif interface == "rai0":
+            band = "5g"
         """Returns a dict with a MAC and its signal strength"""
         lines = ate_output.strip().splitlines()
         if "2.4 GHz radio is disabled" in lines and band == "2g":
@@ -227,7 +233,11 @@ class Dslac55uRouter(Router):
                         print(devlines)
             return ss_dict
 
-    def ate_output_channel(self, ate_output, band):
+    def ate_output_channel(self, ate_output, interface):
+        if interface == "ra0":
+            band = "2g"
+        elif interface == "rai0":
+            band = "5g"
         """Returns a string containing the current channel"""
         lines = ate_output.strip().splitlines()
         if "2.4 GHz radio is disabled" in lines and band == "2g":
