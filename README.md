@@ -14,16 +14,16 @@
 
 | Metric | Description | Required feature |
 | :-------------- | :-------------: | -------------: |
-| `ROUTER_clients_connected_INTERFACE`    | Number of devices connected to `INTERFACE`. | `signal` |
-| `ROUTER_client_signal_INTERFACE_DEVICE` | Current [signal strength](https://www.securedgenetworks.com/blog/wifi-signal-strength#what-is-a-good-wifi-signal-stength) (in dBm) for each connected `DEVICE`. | `signal` |
-| `ROUTER_channel_INTERFACE` | `INTERFACE`'s [channel](https://en.wikipedia.org/wiki/List_of_WLAN_channels). | `channel` |
-| `ROUTER_rx_INTERFACE`, `ROUTER_tx_INTERFACE` | Total number of bytes received/transmitted on a wireless `INTERFACE`. Read from `/sys/class/net/INTERFACE/statistics/rx_bytes`. | `rxtx` |
+| `ROUTER_clients_connected_INTERFACE`    | Number of devices connected to `INTERFACE` | `signal` |
+| `ROUTER_client_signal_INTERFACE_DEVICE` | Current [signal strength](https://www.securedgenetworks.com/blog/wifi-signal-strength#what-is-a-good-wifi-signal-stength) (in dBm) for each connected `DEVICE` | `signal` |
+| `ROUTER_channel_INTERFACE` | `INTERFACE`'s [channel](https://en.wikipedia.org/wiki/List_of_WLAN_channels) | `channel` |
+| `ROUTER_rx_INTERFACE`, `ROUTER_tx_INTERFACE` | Total number of bytes received/transmitted on a wireless `INTERFACE`, read from `/sys/class/net/INTERFACE/statistics/rx_bytes` | `rxtx` |
 
 ## Available backends
 
 | Backend | Description | Available features |
 | :-------------- | :-------------: | -------------: |
-| `dd-wrt`    | Should support all routers running DD-WRT. | `signal`, `channel`, `rxtx` |
+| `dd-wrt`    | Should support all routers running [DD-WRT](https://dd-wrt.com/) | `signal`, `channel`, `rxtx` |
 | `dsl-ac55u` | Only supports the Asus DSL-AC55U | `signal`, `channel`, `rxtx` |
 
 ## Known issues
