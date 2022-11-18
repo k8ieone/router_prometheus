@@ -29,10 +29,9 @@ class Router:
 
     def __del__(self):
         print("Called " + self.name + "'s destructor")
-        if self.protocol == "ssh":
-            if self.connection.is_connected:
-                print("Closing SSH connection to " + self.name)
-                self.connection.close()
+        if self.connection.is_connected:
+            print("Closing SSH connection to " + self.name)
+            self.connection.close()
 
     def __str__(self):
         return "router " + self.name + " at " + self.address
