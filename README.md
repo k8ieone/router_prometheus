@@ -14,11 +14,12 @@
  - [X] Number of connected WiFi clients
  - [X] Clients' MAC addresses (can be mapped to names) and their signal strength
    - [X] DSL-AC55U reports bands (2.4 GHz and 5 GHz) separately
-   - [X] DD-WRT reports bands separately (I assume different bands are different interfaces and I create a metric for each interface)
+   - [X] DD-WRT reports each wireless interface separately
  - [X] Current channel
    - DSL-AC55U still reports current channel even when the radio is disabled by timer
      - When disabled manually, the radio correctly shows itself as disabled
    - When the radio is off, the metric should be gone
+ - [ ] Total number of bytes RX/TX
 
 ## Known issues
  - When a command gets stuck, it hangs the whole progam indeffinitely (caused by [this issue](https://github.com/fabric/fabric/issues/2197))
@@ -40,21 +41,18 @@ DSL-AC55U:
    address: 10.0.0.1
    backend: dsl-ac55U
    transport:
-      protocol: telnet
       username: admin
       password: admin
 RT-N18U:
    address: 10.0.0.2
    backend: dd-wrt
    transport:
-      protocol: ssh
       username: root
       password: admin
 TL-WR1043ND:
    address: 10.0.0.3
    backend: dd-wrt
    transport:
-      protocol: ssh
       username: root
       use_keys: True
 ```
