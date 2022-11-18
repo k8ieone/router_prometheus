@@ -26,7 +26,6 @@ class Router:
             self.use_keys = False
         else:
             self.use_keys = routerconfig[self.name]["transport"]["use_keys"]
-        self.supported_protocols = ["telnet", "ssh", "http"]
         self.supported_features = ["signal", "channel", "rxtx"]
         self.ss_dicts = []
         self.channels = []
@@ -42,35 +41,27 @@ class Router:
                 self.connection.close()
 
     def __str__(self):
-        return "router " + self.name + " at " + self.address + " using " + self.protocol
+        return "router " + self.name + " at " + self.address
 
     def update(self):
         pass
 
     def connect(self):
         """Connects to the router, throws exceptions if it fails somehow"""
-
-        if self.protocol not in self.supported_protocols:
-            raise exceptions.UnsupportedProtocol("Unsupported protocol")
         print("Connecting to " + str(self))
-        if self.protocol == "telnet":
-            pass
-        elif self.protocol == "ssh":
-            if self.connection is None:
-                print(self.name + ": This is a new connection")
-                self.connection = fabric.Connection(host=self.address, user=self.username, connect_kwargs={"password": self.password, "timeout": 30.0})
-                # self.connection.transport.set_keepalive(5)
-            else:
-                print(self.name + ": Closing and opening connection...")
-                self.connection.close()
-                self.connection.open()
-            result = self.connection.run("hostname", hide=True)
-            if result.ok:
-                print(self.name + ": Connection is OK, got hostname " + result.stdout.strip())
-            else:
-                raise Exception("Unable to connect using SSH")
-        elif self.protocol == "http":
-            pass
+        if self.connection is None:
+            print(self.name + ": This is a new connection")
+            self.connection = fabric.Connection(host=self.address, user=self.username, connect_kwargs={"password": self.password, "timeout": 30.0})
+            # self.connection.transport.set_keepalive(5)
+        else:
+            print(self.name + ": Closing and opening connection...")
+            self.connection.close()
+            self.connection.open()
+        result = self.connection.run("hostname", hide=True)
+        if result.ok:
+            print(self.name + ": Connection is OK, got hostname " + result.stdout.strip())
+        else:
+            raise Exception("Unable to connect using SSH")
 
 
 class DdwrtRouter(Router):
@@ -78,21 +69,18 @@ class DdwrtRouter(Router):
 
     def __init__(self, routerconfig):
         Router.__init__(self, routerconfig)
-        self.supported_protocols.remove("telnet")
-        self.supported_protocols.remove("http")
         self.connect()
-        if self.protocol == "ssh":
-            try:
-                self.connection.run("wl", hide=True)
-            except invoke.exceptions.UnexpectedExit:
-                self.wl_command = "wl_atheros"
-            else:
-                self.wl_command = "wl"
-            try:
-                self.connection.run(self.wl_command, hide=True)
-            except invoke.exceptions.UnexpectedExit:
-                print("Both commands failed")
-                raise exceptions.MissingCommand
+        try:
+            self.connection.run("wl", hide=True)
+        except invoke.exceptions.UnexpectedExit:
+            self.wl_command = "wl_atheros"
+        else:
+            self.wl_command = "wl"
+        try:
+            self.connection.run(self.wl_command, hide=True)
+        except invoke.exceptions.UnexpectedExit:
+            print("Both commands failed")
+            raise exceptions.MissingCommand
 
     def __str__(self):
         return "DD-WRT " + Router.__str__(self)
@@ -187,8 +175,6 @@ class Dslac55uRouter(Router):
 
     def __init__(self, routerconfig):
         Router.__init__(self, routerconfig)
-        self.supported_protocols.remove("telnet")
-        self.supported_protocols.remove("http")
         self.supported_features.remove("rxtx")
         self.wireless_interfaces = ["2g", "5g"]
         self.connect()
