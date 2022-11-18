@@ -145,15 +145,14 @@ def create_router_list(routers_dict):
 
 
 def translate_macs(rssi_dict):
-    """Takes the mapping dict and RSSI dict and replaces
-    known MAC addresses with nicknames from mapping
-    returns another dict"""
-    mapping = load_mapping_config()
+    """Uses the mapping dict and replaces known MAC addresses in rssi_dict
+    with nicknames from mapping
+    returns the modified dict"""
     translated_dict = {}
-    if rssi_dict is not None and mapping is not None:
+    if rssi_dict is not None and MAPPING is not None:
         for mac in rssi_dict.keys():
-            if mac in mapping:
-                translated_dict.update({mapping[mac]: rssi_dict[mac]})
+            if mac in MAPPING:
+                translated_dict.update({MAPPING[mac]: rssi_dict[mac]})
             else:
                 translated_dict.update({mac: rssi_dict[mac]})
         return translated_dict
@@ -198,6 +197,8 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
         logging.debug("Debug output enabled!")
     routers = create_router_list(load_routers_config())
+    global MAPPING
+    MAPPING = load_mapping_config()
     collectors = []
     for rtr in routers:
         print("Adding collector for " + rtr.name)

@@ -26,11 +26,6 @@ class Router:
         else:
             self.use_keys = routerconfig[self.name]["transport"]["use_keys"]
         self.supported_features = ["signal", "channel", "rxtx"]
-        self.ss_dicts = []
-        self.channels = []
-        self.wireless_interfaces = []
-        self.interface_tx = []
-        self.interface_rx = []
 
     def __del__(self):
         print("Called " + self.name + "'s destructor")
@@ -43,7 +38,21 @@ class Router:
         return "router " + self.name + " at " + self.address
 
     def update(self):
-        pass
+        if "signal" in self.supported_features:
+            self.ss_dicts = []
+        if "channel" in self.supported_features:
+            self.channels = []
+        if "rxtx" in self.supported_features:
+            self.interface_rx = []
+            self.interface_tx = []
+        for interface in self.wireless_interfaces:
+            if "signal" in self.supported_features:
+                self.ss_dicts.append(self.get_ss_dict(interface))
+            if "channel" in self.supported_features:
+                self.channels.append(self.get_channel(interface))
+            if "rxtx" in self.supported_features:
+                self.interface_rx.append(self.get_interface_rxtx(interface, "rx"))
+                self.interface_tx.append(self.get_interface_rxtx(interface, "tx"))
 
     def get_interface_rxtx(self, interface, selector):
         """Takes an interface and selector (either rx or tx)
@@ -85,21 +94,10 @@ class DdwrtRouter(Router):
         except invoke.exceptions.UnexpectedExit:
             print("Both commands failed")
             raise exceptions.MissingCommand
+        self.wireless_interfaces = self.get_interfaces()
 
     def __str__(self):
         return "DD-WRT " + Router.__str__(self)
-
-    def update(self):
-        self.ss_dicts = []
-        self.channels = []
-        self.interface_rx = []
-        self.interface_tx = []
-        self.wireless_interfaces = self.get_interfaces()
-        for interface in self.wireless_interfaces:
-            self.ss_dicts.append(self.get_ss_dict(interface))
-            self.channels.append(self.get_channel(interface))
-            self.interface_rx.append(self.get_interface_rxtx(interface, "rx"))
-            self.interface_tx.append(self.get_interface_rxtx(interface, "tx"))
 
     def get_channel(self, interface):
         """Returns the interface's current channel"""
@@ -180,18 +178,12 @@ class Dslac55uRouter(Router):
     def __str__(self):
         return "DSL-AC55U " + Router.__str__(self)
 
-    def update(self):
-        ate_output = self.connection.run("ATE show_stainfo", hide=True, warn=True).stdout
-        self.ss_dicts = []
-        self.channels = []
-        self.interface_rx = []
-        self.interface_tx = []
-        for interface in self.wireless_interfaces:
-            self.ss_dicts.append(self.ate_output_ss(ate_output, interface))
-            self.channels.append(self.ate_output_channel(ate_output, interface))
-            self.interface_rx.append(self.get_interface_rxtx(interface, "rx"))
-            self.interface_tx.append(self.get_interface_rxtx(interface, "tx"))
-        # self.ss_dict.update({"5g": self.ate_output_ss(ate_output, "5")})
+    def get_ss_dict(self, interface):
+        self.ate_output = self.connection.run("ATE show_stainfo", hide=True, warn=True).stdout
+        return self.ate_output_ss(self.ate_output, interface)
+
+    def get_channel(self, interface):
+        return self.ate_output_channel(self.ate_output, interface)
 
     def ate_output_ss(self, ate_output, interface):
         if interface == "ra0":
