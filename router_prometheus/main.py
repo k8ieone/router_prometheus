@@ -6,9 +6,8 @@ import socket
 
 import yaml  # type: ignore
 import paramiko  # type: ignore
-from prometheus_client import start_http_server  # type: ignore
+from prometheus_client import start_http_server, PROCESS_COLLECTOR, PLATFORM_COLLECTOR  # type: ignore
 from prometheus_client.core import GaugeMetricFamily, REGISTRY  # type: ignore
-# TODO: Figure out how to unregister the default collectors
 
 # Custom modules import
 from . import router
@@ -74,7 +73,7 @@ def load_mapping_config():
 def create_main_config():
     """Creates an example main config file"""
     print("Creating an example main config file...")
-    config = {"interval": 5, "port": 8080,
+    config = {"cpython_metrics": False, "port": 8080,
               "address": "127.0.0.1", "debug": False}
     try:
         with open(MAIN_CONFIG_LOCATION, "w", encoding="utf-8") as main_config:
@@ -205,6 +204,10 @@ def main():
         collectors.append(RouterCollector(rtr))
     for collector in collectors:
         REGISTRY.register(collector)
+    if not config["cpython_metrics"]:
+        REGISTRY.unregister(PROCESS_COLLECTOR)
+        REGISTRY.unregister(PLATFORM_COLLECTOR)
+        REGISTRY.unregister(REGISTRY._names_to_collectors['python_gc_objects_collected_total'])
     start_http_server(config["port"], config["address"])
     try:
         signal.pause()
