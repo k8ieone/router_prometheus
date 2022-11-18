@@ -33,6 +33,6 @@ ENV PATH=/venv/bin:$PATH
 COPY --from=builder /build/dist /dist
 RUN $py -m pip install /dist/* && $py -m pip uninstall -y pip && rm -r /dist
 
-# The port instide the container must remain set to 8080 in order for this healthcheck to work
+# The port inside the container must remain set to 8080 in order for this healthcheck to work
 HEALTHCHECK --interval=60s --timeout=5s CMD curl -f http://localhost:8080/ || exit 1
 CMD ["python", "-u", "-m", "router_prometheus"]
