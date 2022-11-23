@@ -28,11 +28,13 @@
 | `dsl-ac55u` | Only supports the Asus DSL-AC55U | `signal`, `channel`, `rxtx` |
 
 ## Known issues
- - When a command gets stuck, it hangs the whole progam indeffinitely (caused by [this issue](https://github.com/fabric/fabric/issues/2197))
-   - Same goes for losing connection
- - Something makes it crash sometimes and I'm not sure why
 
-## Config file markup
+Feel free to open a new issue [here](https://github.com/k8ieone/router_prometheus/issues), be it a bug report, feature request or just a question.
+
+ - When a command gets stuck, it hangs the whole progam indefinitely (caused by [this issue](https://github.com/fabric/fabric/issues/2197))
+   - Same goes for losing connection
+
+## Example config files
 
 config.yml:
 ```yml
@@ -56,11 +58,11 @@ RT-N18U:
    transport:
       username: root
       password: admin
-TL-WR1043ND:
+Loco-M5:
    address: 10.0.0.3
-   backend: dd-wrt
+   backend: ubnt
    transport:
-      username: root
+      username: ubnt
       use_keys: True
 ```
 
