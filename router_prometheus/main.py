@@ -73,7 +73,7 @@ def load_mapping_config():
 def create_main_config():
     """Creates an example main config file"""
     print("Creating an example main config file...")
-    config = {"cpython_metrics": False, "port": 8080,
+    config = {"cpython_metrics": False, "port": 9000,
               "address": "127.0.0.1", "debug": False}
     try:
         with open(MAIN_CONFIG_LOCATION, "w", encoding="utf-8") as main_config:
