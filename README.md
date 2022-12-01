@@ -38,7 +38,7 @@ Feel free to open a new issue [here](https://github.com/k8ieone/router_prometheu
 
 config.yml:
 ```yml
-port: 8080
+port: 9000
 address: 127.0.0.1
 debug: true
 cpython_metrics: false
