@@ -175,7 +175,8 @@ class UbntRouter(Router):
         self.connect()
         self.wireless_interfaces = self.get_interfaces()
         # Workaround: wifi0 is a dummy interface, so we remove it
-        self.wireless_interfaces.remove("wifi0")
+        if "wifi0" in self.wireless_interfaces:
+            self.wireless_interfaces.remove("wifi0")
 
     def __str__(self):
         return "Ubiquiti " + Router.__str__(self)
