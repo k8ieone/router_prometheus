@@ -26,16 +26,31 @@ class Router:
             self.use_keys = False
         else:
             self.use_keys = routerconfig[self.name]["transport"]["use_keys"]
-        self.supported_features = ["signal", "channel", "rxtx"]
+        self.connect()
+        # I have a feeling that there should be a condition here
+        self.wireless_interfaces = self.get_interfaces()
+        self.rprint("Detected wireless interfaces: " + str(self.wireless_interfaces))
+        if "proc" in self.supported_features:
+            meminfo_output = self.connection.run("cat /proc/meminfo", hide=True).stdout.strip().split()
+            self.memtotal_index = meminfo_output.index("MemTotal:")
+            if "MemAvailable:" in meminfo_output:
+                self.memavailable_index = meminfo_output.index("MemAvailable:")
+            else:
+                self.rprint("/proc/meminfo does not report MemAvailable, memory usage may not be accurate.")
+                self.memfree_index = meminfo_output.index("MemFree:")
+                self.sreclaimable_index = meminfo_output.index("SReclaimable:")
 
     def __del__(self):
-        print("Called " + self.name + "'s destructor")
+        self.rprint("Destructor got called")
         if self.connection.is_connected:
-            print("Closing SSH connection to " + self.name)
+            self.rprint("Closing connection...")
             self.connection.close()
 
     def __str__(self):
         return "router " + self.name + " at " + self.address
+
+    def rprint(self, printstring):
+        print(self.name + ": " + printstring)
 
     def update(self):
         if "signal" in self.supported_features:
@@ -45,6 +60,9 @@ class Router:
         if "rxtx" in self.supported_features:
             self.interface_rx = []
             self.interface_tx = []
+        if "proc" in self.supported_features:
+            self.loads = self.get_system_load()
+            self.mem_used = self.get_memory_usage()
         for interface in self.wireless_interfaces:
             if "signal" in self.supported_features:
                 self.ss_dicts.append(self.get_ss_dict(interface))
@@ -59,6 +77,20 @@ class Router:
         Returns the number of bytes received/transmitted (taken from sysfs)"""
         return self.connection.run("cat /sys/class/net/" + interface + "/statistics/" + selector + "_bytes", hide=True).stdout.strip()
 
+    def get_system_load(self):
+        """Returns the contents of /proc/loadavg"""
+        return self.connection.run("cat /proc/loadavg", hide=True).stdout.strip().split()
+
+    def get_memory_usage(self):
+        """Returns memory usage in %"""
+        meminfo_output = self.connection.run("cat /proc/meminfo", hide=True).stdout.strip().split()
+        mem_total = int(meminfo_output[self.memtotal_index + 1])
+        if hasattr(self, "memavailable_index"):
+            mem_avail = int(meminfo_output[self.memavailable_index + 1])
+        else:
+            mem_avail = int(meminfo_output[self.memfree_index + 1]) + int(meminfo_output[self.sreclaimable_index + 1])
+        return 100 - (mem_avail / mem_total) * 100
+
     def get_interfaces(self):
         """Returns a list of wireless interfaces"""
         interfaces = self.connection.run("ls /sys/class/net", hide=True).stdout.strip().split()
@@ -70,18 +102,17 @@ class Router:
 
     def connect(self):
         """Connects to the router, throws exceptions if it fails somehow"""
-        print("Connecting to " + str(self))
         if self.connection is None:
-            print(self.name + ": This is a new connection")
+            self.rprint("This is a new connection")
             self.connection = fabric.Connection(host=self.address, user=self.username, connect_kwargs={"password": self.password, "timeout": 30.0})
             # self.connection.transport.set_keepalive(5)
         else:
-            print(self.name + ": Closing and opening connection...")
+            self.rprint("Closing and opening connection...")
             self.connection.close()
             self.connection.open()
         result = self.connection.run("echo", hide=True)
         if result.ok:
-            print(self.name + ": Connection is OK!")
+            self.rprint("Connection is OK!")
         else:
             raise Exception("Unable to connect using SSH")
 
@@ -90,20 +121,21 @@ class DdwrtRouter(Router):
     """Inherits from the generic router class and adds DD-WRT-specific stuff"""
 
     def __init__(self, routerconfig):
+        self.supported_features = ["signal", "channel", "rxtx", "proc"]
         Router.__init__(self, routerconfig)
-        self.connect()
         try:
             self.connection.run("wl", hide=True)
         except invoke.exceptions.UnexpectedExit:
+            self.rprint("Detected as an Atheros router, using 'wl_atheros'")
             self.wl_command = "wl_atheros"
         else:
+            self.rprint("Detected as a Broadcom router, using 'wl'")
             self.wl_command = "wl"
         try:
             self.connection.run(self.wl_command, hide=True)
         except invoke.exceptions.UnexpectedExit:
-            print("Both commands failed")
+            self.rprint("Both commands failed!")
             raise exceptions.MissingCommand
-        self.wireless_interfaces = self.get_interfaces()
 
     def __str__(self):
         return "DD-WRT " + Router.__str__(self)
@@ -171,11 +203,10 @@ class UbntRouter(Router):
     """Inherits from the generic router class and adds Ubiquiti-specific stuff"""
 
     def __init__(self, routerconfig):
+        self.supported_features = ["signal", "channel", "rxtx", "proc"]
         Router.__init__(self, routerconfig)
-        self.connect()
-        self.wireless_interfaces = self.get_interfaces()
-        # Workaround: wifi0 is a dummy interface, so we remove it
         if "wifi0" in self.wireless_interfaces:
+            self.rprint("Workaround - wifi0 is a dummy interface, removing it from the list")
             self.wireless_interfaces.remove("wifi0")
 
     def __str__(self):
@@ -199,12 +230,16 @@ class UbntRouter(Router):
 class Dslac55uRouter(Router):
 
     def __init__(self, routerconfig):
+        self.supported_features = ["signal", "channel", "rxtx", "proc"]
         Router.__init__(self, routerconfig)
-        self.wireless_interfaces = ["ra0", "rai0"]
-        self.connect()
 
     def __str__(self):
         return "DSL-AC55U " + Router.__str__(self)
+
+    def get_interfaces(self):
+        """Manual override for wireless interfaces of the DSL-AC55U"""
+        self.rprint("Workaround - Skipped wireless interface detection")
+        return ["ra0", "rai0"]
 
     def get_ss_dict(self, interface):
         self.ate_output = self.connection.run("ATE show_stainfo", hide=True, warn=True).stdout
