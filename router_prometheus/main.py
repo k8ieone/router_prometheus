@@ -171,6 +171,12 @@ class RouterCollector:
         """This is the function internally called by prometheus_client"""
         self.rtr.update()
         router_name = self.rtr.name.replace("-", "_").lower()
+        if "proc" in self.rtr.supported_features:
+            yield GaugeMetricFamily(router_name + '_mem_percent_used', 'Percent of memory used', value=self.rtr.mem_used)
+            load_gauge = GaugeMetricFamily(router_name + '_load', 'Average load', labels=["time"])
+            for i, l in enumerate(["1", "5", "15"]):
+                load_gauge.add_metric(labels=[l + "m"], value=self.rtr.loads[i])
+            yield load_gauge
         for index, interface in enumerate(self.rtr.wireless_interfaces):
             if "signal" in self.rtr.supported_features:
                 clients = translate_macs(self.rtr.ss_dicts[index])
@@ -190,7 +196,6 @@ class RouterCollector:
             if "rxtx" in self.rtr.supported_features:
                 yield GaugeMetricFamily(router_name + '_rx_' + interface, 'Bytes received', value=self.rtr.interface_rx[index])
                 yield GaugeMetricFamily(router_name + '_tx_' + interface, 'Bytes transmitted', value=self.rtr.interface_tx[index])
-
 
 def main():
     config = load_main_config()
