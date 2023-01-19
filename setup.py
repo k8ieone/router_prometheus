@@ -5,15 +5,15 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="router_prometheus",
-    version="0.2.6",
-    author="k8ieone",
+    version="0.2.7",
+    author="a13xie",
     author_email="rostik.medved@gmail.com",
     description="Get metrics from various consumer routers",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/k8ieone/router_prometheus",
+    url="https://github.com/a13xie/router_prometheus",
     project_urls={
-        "Bug Tracker": "https://github.com/k8ieone/router_prometheus/issues",
+        "Bug Tracker": "https://github.com/a13xie/router_prometheus/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3",
