@@ -173,7 +173,7 @@ class RouterCollector:
         router_name = self.rtr.name.replace("-", "_").lower()
         if "proc" in self.rtr.supported_features:
             yield GaugeMetricFamily(router_name + '_mem_percent_used', 'Percent of memory used', value=self.rtr.mem_used)
-            load_gauge = GaugeMetricFamily(router_name + '_load', 'Average load', labels=["time"])
+            load_gauge = GaugeMetricFamily(router_name + '_load', 'Average load', labels=["t"])
             for i, l in enumerate(["1", "5", "15"]):
                 load_gauge.add_metric(labels=[l + "m"], value=self.rtr.loads[i])
             yield load_gauge
