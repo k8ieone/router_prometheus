@@ -1,6 +1,6 @@
 import fabric  # type: ignore
 import invoke  # type: ignore
-import paramiko  # type: ignore
+# import paramiko  # type: ignore
 import json
 
 from . import exceptions
@@ -29,16 +29,21 @@ class Router:
         self.connect()
         # I have a feeling that there should be a condition here
         self.wireless_interfaces = self.get_interfaces()
-        self.rprint("Detected wireless interfaces: " + str(self.wireless_interfaces))
+        self.rprint("Detected wireless interfaces: "
+                    + str(self.wireless_interfaces))
         if "proc" in self.supported_features:
-            meminfo_output = self.connection.run("cat /proc/meminfo", hide=True).stdout.strip().split()
+            meminfo_output = self.connection.run("cat /proc/meminfo",
+                                                 hide=True)\
+                                                 .stdout.strip().split()
             self.memtotal_index = meminfo_output.index("MemTotal:")
             if "MemAvailable:" in meminfo_output:
                 self.memavailable_index = meminfo_output.index("MemAvailable:")
             else:
-                self.rprint("/proc/meminfo does not report MemAvailable, memory usage may not be accurate.")
+                self.rprint(
+                    "/proc/meminfo does not report MemAvailable," +
+                    "memory usage may not be accurate.")
                 self.memfree_index = meminfo_output.index("MemFree:")
-                #self.sreclaimable_index = meminfo_output.index("SReclaimable:")
+                # self.sreclaimable_index=meminfo_output.index("SReclaimable:")
 
     def __del__(self):
         self.rprint("Destructor got called")
@@ -69,35 +74,47 @@ class Router:
             if "channel" in self.supported_features:
                 self.channels.append(self.get_channel(interface))
             if "rxtx" in self.supported_features:
-                self.interface_rx.append(self.get_interface_rxtx(interface, "rx"))
-                self.interface_tx.append(self.get_interface_rxtx(interface, "tx"))
+                self.interface_rx.append(self.get_interface_rxtx(interface,
+                                                                 "rx"))
+                self.interface_tx.append(self.get_interface_rxtx(interface,
+                                                                 "tx"))
 
     def get_interface_rxtx(self, interface, selector):
         """Takes an interface and selector (either rx or tx)
         Returns the number of bytes received/transmitted (taken from sysfs)"""
-        return self.connection.run("cat /sys/class/net/" + interface + "/statistics/" + selector + "_bytes", hide=True).stdout.strip()
+        return self.connection.run("cat /sys/class/net/"
+                                   + interface
+                                   + "/statistics/"
+                                   + selector
+                                   + "_bytes", hide=True).stdout.strip()
 
     def get_system_load(self):
         """Returns the contents of /proc/loadavg"""
-        return self.connection.run("cat /proc/loadavg", hide=True).stdout.strip().split()
+        return self.connection.run("cat /proc/loadavg",
+                                   hide=True).stdout.strip().split()
 
     def get_memory_usage(self):
         """Returns memory usage in %"""
-        meminfo_output = self.connection.run("cat /proc/meminfo", hide=True).stdout.strip().split()
+        meminfo_output = self.connection.run("cat /proc/meminfo",
+                                             hide=True).stdout.strip().split()
         mem_total = int(meminfo_output[self.memtotal_index + 1])
         if hasattr(self, "memavailable_index"):
             mem_avail = int(meminfo_output[self.memavailable_index + 1])
         else:
-            #mem_avail = int(meminfo_output[self.memfree_index + 1]) + int(meminfo_output[self.sreclaimable_index + 1])
+            # mem_avail = int(meminfo_output[self.memfree_index + 1])
+            # + int(meminfo_output[self.sreclaimable_index + 1])
             mem_avail = int(meminfo_output[self.memfree_index + 1])
         return 100 - (mem_avail / mem_total) * 100
 
     def get_interfaces(self):
         """Returns a list of wireless interfaces"""
-        interfaces = self.connection.run("ls /sys/class/net", hide=True).stdout.strip().split()
+        interfaces = self.connection.run("ls /sys/class/net",
+                                         hide=True).stdout.strip().split()
         wireless_interfaces = []
         for interface in interfaces:
-            if "wireless" in self.connection.run("ls /sys/class/net/" + interface, hide=True).stdout.strip():
+            if "wireless" in self.connection.run("ls /sys/class/net/"
+                                                 + interface,
+                                                 hide=True).stdout.strip():
                 wireless_interfaces.append(interface)
         return wireless_interfaces
 
@@ -105,7 +122,11 @@ class Router:
         """Connects to the router, throws exceptions if it fails somehow"""
         if self.connection is None:
             self.rprint("This is a new connection")
-            self.connection = fabric.Connection(host=self.address, user=self.username, connect_kwargs={"password": self.password, "timeout": 30.0})
+            self.connection = fabric.Connection(host=self.address,
+                                                user=self.username,
+                                                connect_kwargs={
+                                                    "password": self.password,
+                                                    "timeout": 30.0})
             # self.connection.transport.set_keepalive(5)
         else:
             self.rprint("Closing and opening connection...")
@@ -144,15 +165,20 @@ class DdwrtRouter(Router):
     def get_channel(self, interface):
         """Returns the interface's current channel"""
         if self.wl_command == "wl":
-            radio_on = self.connection.run(self.wl_command + " -i " + interface + " radio", hide=True).stdout.strip()
+            radio_on = self.connection.run(self.wl_command +
+                                           " -i " + interface + " radio",
+                                           hide=True).stdout.strip()
             if radio_on == "0x0001":
                 return None
-            lines = self.connection.run(self.wl_command + " -i " + interface + " channel", hide=True).stdout.strip().splitlines()
+            lines = self.connection.run(self.wl_command +
+                                        " -i " + interface + " channel",
+                                        hide=True).stdout.strip().splitlines()
             for line in lines:
                 if "current" in line:
                     return line.split()[-1]
         elif self.wl_command == "wl_atheros":
-            lines = self.connection.run("iw " + interface + " info", hide=True).stdout.strip().splitlines()
+            lines = self.connection.run("iw " + interface + " info",
+                                        hide=True).stdout.strip().splitlines()
             for line in lines:
                 if "channel" in line:
                     return line.split()[1]
@@ -170,7 +196,8 @@ class DdwrtRouter(Router):
 
     def parse_wl_output(self, output):
         """Only called internally from get_clients_list
-        Takes the raw output of wl assoclist and returns a list of MAC addresses"""
+        Takes the raw output of wl assoclist and
+        returns a list of MAC addresses"""
 
         initial_list = output.stdout.strip().split()
         client_list = []
@@ -188,7 +215,9 @@ class DdwrtRouter(Router):
         Returns a dict with a MAC and its RSSI value"""
 
         try:
-            output = self.connection.run(self.wl_command + " -i " + interface + " rssi " + mac, hide=True)
+            output = self.connection.run(self.wl_command +
+                                         " -i " + interface + " rssi " + mac,
+                                         hide=True)
             return {mac: output.stdout.strip().split()[-1]}
         except invoke.exceptions.UnexpectedExit:
             return {mac: None}
@@ -196,18 +225,22 @@ class DdwrtRouter(Router):
     def get_clients_list(self, interface):
         """Gets the list of connected clients from the router
         Uses parse_wl_output to turn the wl output to a list"""
-        response = self.connection.run(self.wl_command + " -i " + interface + " assoclist", hide=True)
+        response = self.connection.run(self.wl_command +
+                                       " -i " + interface + " assoclist",
+                                       hide=True)
         return self.parse_wl_output(response)
 
 
 class UbntRouter(Router):
-    """Inherits from the generic router class and adds Ubiquiti-specific stuff"""
+    """Inherits from the generic router class and
+    adds Ubiquiti-specific stuff"""
 
     def __init__(self, routerconfig):
         self.supported_features = ["signal", "channel", "rxtx", "proc"]
         Router.__init__(self, routerconfig)
         if "wifi0" in self.wireless_interfaces:
-            self.rprint("Workaround - wifi0 is a dummy interface, removing it from the list")
+            self.rprint("Workaround - wifi0 is a dummy interface," +
+                        "removing it from the list")
             self.wireless_interfaces.remove("wifi0")
 
     def __str__(self):
@@ -215,13 +248,15 @@ class UbntRouter(Router):
 
     def get_channel(self, interface):
         """Returns the interface's current channel"""
-        output = self.connection.run("iwgetid -c " + interface, hide=True).stdout.strip().splitlines()
+        output = self.connection.run("iwgetid -c " + interface,
+                                     hide=True).stdout.strip().splitlines()
         return output[0].split(":")[1]
 
     def get_ss_dict(self, interface):
         """Overrides the generic dummy function for getting
         the signal strength dictionary"""
-        wstalist = json.loads(self.connection.run("wstalist", hide=True).stdout)
+        wstalist = json.loads(self.connection.run("wstalist",
+                              hide=True).stdout)
         ss_dict = {}
         for sta in wstalist:
             ss_dict.update({sta.get("mac"): sta.get("signal")})
@@ -243,7 +278,8 @@ class Dslac55uRouter(Router):
         return ["ra0", "rai0"]
 
     def get_ss_dict(self, interface):
-        self.ate_output = self.connection.run("ATE show_stainfo", hide=True, warn=True).stdout
+        self.ate_output = self.connection.run("ATE show_stainfo",
+                                              hide=True, warn=True).stdout
         return self.ate_output_ss(self.ate_output, interface)
 
     def get_channel(self, interface):
@@ -284,7 +320,9 @@ class Dslac55uRouter(Router):
             if len(devlines) != 0:
                 for line in devlines:
                     try:
-                        ss_dict.update({line.split()[0]: line.split()[1].replace("dBm", "")})
+                        ss_dict.update({
+                            line.split()[0]: line.split()[1].replace("dBm", "")
+                            })
                     except IndexError:
                         print(devlines)
             return ss_dict
