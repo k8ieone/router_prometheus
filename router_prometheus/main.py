@@ -184,6 +184,10 @@ class RouterCollector:
                 load_gauge.add_metric(labels=[l + "m"],
                                       value=self.rtr.loads[i])
             yield load_gauge
+        if "dmu_temp" in self.rtr.supported_features:
+            yield GaugeMetricFamily(router_name + '_cpu_temp',
+                                    'CPU temperature',
+                                    value=self.rtr.dmu_temp)
         for index, interface in enumerate(self.rtr.wireless_interfaces):
             if "signal" in self.rtr.supported_features:
                 clients = translate_macs(self.rtr.ss_dicts[index])
@@ -218,6 +222,10 @@ class RouterCollector:
                 yield GaugeMetricFamily(router_name + '_tx_' + interface,
                                         'Bytes transmitted',
                                         value=self.rtr.interface_tx[index])
+            if "int_temp" in self.rtr.supported_features:
+                yield GaugeMetricFamily(router_name + '_temp_' + interface,
+                                        'Interface temperature',
+                                        value=self.rtr.int_temperatures[index])
 
 
 def main():
