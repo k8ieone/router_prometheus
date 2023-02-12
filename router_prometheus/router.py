@@ -43,7 +43,8 @@ class Router:
                     "/proc/meminfo does not report MemAvailable," +
                     "memory usage may not be accurate.")
                 self.memfree_index = meminfo_output.index("MemFree:")
-                # self.sreclaimable_index=meminfo_output.index("SReclaimable:")
+                self.buffers_index = meminfo_output.index("Buffers:")
+                self.cache_index = meminfo_output.index("Cached:")
 
     def __del__(self):
         self.rprint("Destructor got called")
@@ -101,9 +102,9 @@ class Router:
         if hasattr(self, "memavailable_index"):
             mem_avail = int(meminfo_output[self.memavailable_index + 1])
         else:
-            # mem_avail = int(meminfo_output[self.memfree_index + 1])
-            # + int(meminfo_output[self.sreclaimable_index + 1])
-            mem_avail = int(meminfo_output[self.memfree_index + 1])
+            mem_avail = int(meminfo_output[self.memfree_index + 1]) + \
+                        int(meminfo_output[self.buffers_index + 1]) + \
+                        int(meminfo_output[self.cache_index + 1])
         return 100 - (mem_avail / mem_total) * 100
 
     def get_interfaces(self):
