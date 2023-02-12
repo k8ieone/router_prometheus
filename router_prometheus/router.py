@@ -41,7 +41,7 @@ class Router:
             else:
                 self.rprint(
                     "/proc/meminfo does not report MemAvailable," +
-                    "memory usage may not be accurate.")
+                    " memory usage may not be accurate.")
                 self.memfree_index = meminfo_output.index("MemFree:")
                 self.buffers_index = meminfo_output.index("Buffers:")
                 self.cache_index = meminfo_output.index("Cached:")
@@ -69,7 +69,13 @@ class Router:
         if "proc" in self.supported_features:
             self.loads = self.get_system_load()
             self.mem_used = self.get_memory_usage()
+        if "int_temp" in self.supported_features:
+            self.int_temperatures = []
+        if "dmu_temp" in self.supported_features:
+            self.dmu_temp = self.get_dmu_temp()
         for interface in self.wireless_interfaces:
+            if "int_temp" in self.supported_features:
+                self.int_temperatures.append(self.get_int_temp(interface))
             if "signal" in self.supported_features:
                 self.ss_dicts.append(self.get_ss_dict(interface))
             if "channel" in self.supported_features:
@@ -144,7 +150,8 @@ class DdwrtRouter(Router):
     """Inherits from the generic router class and adds DD-WRT-specific stuff"""
 
     def __init__(self, routerconfig):
-        self.supported_features = ["signal", "channel", "rxtx", "proc"]
+        self.supported_features = ["signal", "channel", "rxtx", "proc",
+                                   "int_temp", "dmu_temp"]
         Router.__init__(self, routerconfig)
         try:
             self.connection.run("wl", hide=True)
@@ -159,6 +166,13 @@ class DdwrtRouter(Router):
         except invoke.exceptions.UnexpectedExit:
             self.rprint("Both commands failed!")
             raise exceptions.MissingCommand
+        if self.wl_command != "wl":
+            self.rprint("Interface temperature monitoring not supported.")
+            self.supported_features.remove("int_temp")
+        if self.connection.run("test -f /proc/dmu/temperature",
+                               warn=True).exited != 0:
+            self.rprint("CPU temperature monitoring not supported.")
+            self.supported_features.remove("dmu_temp")
 
     def __str__(self):
         return "DD-WRT " + Router.__str__(self)
@@ -209,6 +223,21 @@ class DdwrtRouter(Router):
             return client_list
         else:
             return []
+
+    def get_int_temp(self, interface):
+        """Returns the interface's temperature"""
+        return self.connection.run(self.wl_command
+                                   + " -i " + interface
+                                   + " phy_tempsense",
+                                   hide=True).stdout.strip().split()[0]
+
+    def get_dmu_temp(self):
+        """Returns the CPU temperature (only available on Broadcom devices)"""
+        out = self.connection.run("cat /proc/dmu/temperature",
+                                  hide=True).stdout.strip()
+        if out.isdigit():
+            out = str(int(out) / 10)
+        return out
 
     def get_ss(self, mac, interface):
         """Only called internally from get_ss_dict
