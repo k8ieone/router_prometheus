@@ -153,18 +153,17 @@ class DdwrtRouter(Router):
         self.supported_features = ["signal", "channel", "rxtx", "proc",
                                    "int_temp", "dmu_temp"]
         Router.__init__(self, routerconfig)
-        try:
-            self.connection.run("wl", hide=True)
-        except invoke.exceptions.UnexpectedExit:
+        wl_test = self.connection.run("which wl", hide=True, warn=True)
+        wla_test = self.connection.run("which wl_atheros",
+                                       hide=True, warn=True)
+        if wla_test.exited == 0:
             self.rprint("Detected as an Atheros router, using 'wl_atheros'")
             self.wl_command = "wl_atheros"
-        else:
+        elif wl_test.exited == 0:
             self.rprint("Detected as a Broadcom router, using 'wl'")
             self.wl_command = "wl"
-        try:
-            self.connection.run(self.wl_command, hide=True)
-        except invoke.exceptions.UnexpectedExit:
-            self.rprint("Both commands failed!")
+        else:
+            self.rprint("Could not determine wl command!")
             raise exceptions.MissingCommand
         if self.wl_command != "wl":
             self.rprint("Interface temperature monitoring not supported.")
