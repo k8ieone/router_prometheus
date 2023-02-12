@@ -6,8 +6,9 @@ import socket
 
 import yaml  # type: ignore
 import paramiko  # type: ignore
-from prometheus_client import start_http_server, PROCESS_COLLECTOR, \
-                              PLATFORM_COLLECTOR  # type: ignore
+from prometheus_client import start_http_server  # type: ignore
+from prometheus_client import PLATFORM_COLLECTOR  # type: ignore
+from prometheus_client import PROCESS_COLLECTOR  # type: ignore
 from prometheus_client.core import GaugeMetricFamily, REGISTRY  # type: ignore
 
 # Custom modules import
