@@ -1,5 +1,6 @@
 FROM debian:testing AS builder
 ARG py=python3
+ENV py=$py
 
 RUN apt update && apt install -y $py wget python3-distutils $py-venv
 RUN wget https://bootstrap.pypa.io/get-pip.py
@@ -8,19 +9,19 @@ RUN $py get-pip.py
 ADD . /build
 WORKDIR /build
 
-RUN $py -m pip install setuptools wheel
+RUN $py -m pip install setuptools
 
 RUN apt install -y gcc make rustc cargo libffi-dev libssl-dev $py-dev
 
 RUN $py -m venv /venv
-#ENV PATH=/venv/bin:$PATH
-RUN $py -m pip install setuptools_rust
-RUN $py setup.py bdist_wheel
+ENV PATH=/venv/bin:$PATH
+RUN $py -m pip install setuptools-rust wheel
+RUN $py ./setup.py bdist_wheel
 RUN $py -m pip wheel . -w dist
 
 
 FROM debian:testing AS runner
-LABEL org.opencontainers.image.source https://github.com/satcom886/router_prometheus
+LABEL org.opencontainers.image.source https://github.com/a13xie/router_prometheus
 ARG py=python3
 ENV py=$py
 

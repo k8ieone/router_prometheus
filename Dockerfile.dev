@@ -8,7 +8,7 @@ RUN apk add python3 py3-build
 RUN python3 -m build --wheel
 
 FROM alpine:edge AS runner
-LABEL org.opencontainers.image.source https://github.com/satcom886/router_prometheus
+LABEL org.opencontainers.image.source https://github.com/a13xie/router_prometheus
 
 RUN mkdir /config
 
