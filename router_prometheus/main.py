@@ -189,6 +189,8 @@ class RouterCollector:
                                     'CPU temperature',
                                     value=self.rtr.dmu_temp)
         for index, interface in enumerate(self.rtr.wireless_interfaces):
+            if "." in interface:
+                interface = interface.replace(".", "_")
             if "signal" in self.rtr.supported_features:
                 clients = translate_macs(self.rtr.ss_dicts[index])
                 yield GaugeMetricFamily(router_name + '_clients_connected_'
