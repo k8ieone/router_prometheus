@@ -5,6 +5,14 @@ import json
 
 from . import exceptions
 
+features = {
+            "int_detect": "Interface detection",
+            "signal": "Client signal strength",
+            "channel": "Current interface channel",
+            "rxtx": "Bytes sent/received",
+            "proc": "Various stats from /proc",
+            "int_temp": "Interface temperature",
+            "dmu_temp": "CPU temperature"}
 
 class Router:
     """Generic router class"""
@@ -29,8 +37,6 @@ class Router:
         self.connect()
         # I have a feeling that there should be a condition here
         self.wireless_interfaces = self.get_interfaces()
-        self.rprint("Detected wireless interfaces: "
-                    + str(self.wireless_interfaces))
         if "proc" in self.supported_features:
             meminfo_output = self.connection.run("cat /proc/meminfo",
                                                  hide=True)\
@@ -40,8 +46,9 @@ class Router:
                 self.memavailable_index = meminfo_output.index("MemAvailable:")
             else:
                 self.rprint(
-                    "/proc/meminfo does not report MemAvailable," +
+                    "proc: /proc/meminfo does not report MemAvailable," +
                     " memory usage may not be accurate.")
+                self.proc_taint = None
                 self.memfree_index = meminfo_output.index("MemFree:")
                 self.buffers_index = meminfo_output.index("Buffers:")
                 self.cache_index = meminfo_output.index("Cached:")
@@ -57,6 +64,25 @@ class Router:
 
     def rprint(self, printstring):
         print(self.name + ": " + printstring)
+
+    def list_features(self):
+        alignment_length = len("int_detect") + 1
+        self.rprint("Wireless interfaces: " + str(self.wireless_interfaces))
+        self.rprint("-------------------------------")
+        for feature in features:
+            feature_aligned = feature
+            while len(feature_aligned) != alignment_length:
+                feature_aligned += " "
+            if feature in self.supported_features:
+                if hasattr(self, feature + "_taint"):
+                    self.rprint("[\033[93m   PART   \033[00m]  " + feature_aligned + "-   " + features[feature] + "   - see the above messages for details")
+                else:
+                    self.rprint("[\033[92m   FULL   \033[00m]  " + feature_aligned + "-   " + features[feature])
+            elif feature in self.implemented_features:
+                self.rprint("[\033[91m DISABLED \033[00m]  " + feature_aligned + "-   " + features[feature])
+            else:
+                self.rprint("[\033[94m NOT IMPL \033[00m]  " + feature_aligned + "-   " + features[feature])
+        self.rprint("-------------------------------")
 
     def update(self):
         if "signal" in self.supported_features:
@@ -128,7 +154,6 @@ class Router:
     def connect(self):
         """Connects to the router, throws exceptions if it fails somehow"""
         if self.connection is None:
-            self.rprint("This is a new connection")
             self.connection = fabric.Connection(host=self.address,
                                                 user=self.username,
                                                 connect_kwargs={
@@ -150,8 +175,8 @@ class DdwrtRouter(Router):
     """Inherits from the generic router class and adds DD-WRT-specific stuff"""
 
     def __init__(self, routerconfig):
-        self.supported_features = ["signal", "channel", "rxtx", "proc",
-                                   "int_temp", "dmu_temp"]
+        self.implemented_features = list(features.keys())
+        self.supported_features = self.implemented_features.copy()
         Router.__init__(self, routerconfig)
         wl_test = self.connection.run("which wl", hide=True, warn=True)
         wla_test = self.connection.run("which wl_atheros",
@@ -166,12 +191,11 @@ class DdwrtRouter(Router):
             self.rprint("Could not determine wl command!")
             raise exceptions.MissingCommand
         if self.wl_command != "wl":
-            self.rprint("Interface temperature monitoring not supported.")
             self.supported_features.remove("int_temp")
         if self.connection.run("test -f /proc/dmu/temperature",
                                warn=True).exited != 0:
-            self.rprint("CPU temperature monitoring not supported.")
             self.supported_features.remove("dmu_temp")
+        self.list_features()
 
     def __str__(self):
         return "DD-WRT " + Router.__str__(self)
@@ -269,12 +293,15 @@ class UbntRouter(Router):
     adds Ubiquiti-specific stuff"""
 
     def __init__(self, routerconfig):
-        self.supported_features = ["signal", "channel", "rxtx", "proc"]
+        self.implemented_features = ["signal", "channel", "rxtx", "proc", "int_detect"]
+        self.supported_features = self.implemented_features.copy()
         Router.__init__(self, routerconfig)
         if "wifi0" in self.wireless_interfaces:
             self.rprint("Workaround - wifi0 is a dummy interface," +
                         "removing it from the list")
             self.wireless_interfaces.remove("wifi0")
+            self.int_detect_taint = None
+        self.list_features()
 
     def __str__(self):
         return "Ubiquiti " + Router.__str__(self)
@@ -299,8 +326,10 @@ class UbntRouter(Router):
 class Dslac55uRouter(Router):
 
     def __init__(self, routerconfig):
-        self.supported_features = ["signal", "channel", "rxtx", "proc"]
+        self.implemented_features = ["signal", "channel", "rxtx", "proc", "int_detect"]
+        self.supported_features = self.implemented_features.copy()
         Router.__init__(self, routerconfig)
+        self.list_features()
 
     def __str__(self):
         return "DSL-AC55U " + Router.__str__(self)
@@ -308,6 +337,7 @@ class Dslac55uRouter(Router):
     def get_interfaces(self):
         """Manual override for wireless interfaces of the DSL-AC55U"""
         self.rprint("Workaround - Skipped wireless interface detection")
+        self.supported_features.remove("int_detect")
         return ["ra0", "rai0"]
 
     def get_ss_dict(self, interface):
