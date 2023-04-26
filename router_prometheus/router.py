@@ -14,6 +14,7 @@ features = {
             "int_temp": "Interface temperature",
             "dmu_temp": "CPU temperature"}
 
+
 class Router:
     """Generic router class"""
 
@@ -75,13 +76,26 @@ class Router:
                 feature_aligned += " "
             if feature in self.supported_features:
                 if hasattr(self, feature + "_taint"):
-                    self.rprint("[\033[93m   PART   \033[00m]  " + feature_aligned + "-   " + features[feature] + "   - see the above messages for details")
+                    self.rprint("[\033[93m   PART   \033[00m]  "
+                                + feature_aligned
+                                + "-   "
+                                + features[feature]
+                                + "   - see the above messages for details")
                 else:
-                    self.rprint("[\033[92m   FULL   \033[00m]  " + feature_aligned + "-   " + features[feature])
+                    self.rprint("[\033[92m   FULL   \033[00m]  "
+                                + feature_aligned
+                                + "-   "
+                                + features[feature])
             elif feature in self.implemented_features:
-                self.rprint("[\033[91m DISABLED \033[00m]  " + feature_aligned + "-   " + features[feature])
+                self.rprint("[\033[91m DISABLED \033[00m]  "
+                            + feature_aligned
+                            + "-   "
+                            + features[feature])
             else:
-                self.rprint("[\033[94m NOT IMPL \033[00m]  " + feature_aligned + "-   " + features[feature])
+                self.rprint("[\033[94m NOT IMPL \033[00m]  "
+                            + feature_aligned
+                            + "-   "
+                            + features[feature])
         self.rprint("-------------------------------")
 
     def update(self):
@@ -293,7 +307,8 @@ class UbntRouter(Router):
     adds Ubiquiti-specific stuff"""
 
     def __init__(self, routerconfig):
-        self.implemented_features = ["signal", "channel", "rxtx", "proc", "int_detect"]
+        self.implemented_features = ["signal", "channel", "rxtx", "proc",
+                                     "int_detect"]
         self.supported_features = self.implemented_features.copy()
         Router.__init__(self, routerconfig)
         if "wifi0" in self.wireless_interfaces:
@@ -326,7 +341,8 @@ class UbntRouter(Router):
 class Dslac55uRouter(Router):
 
     def __init__(self, routerconfig):
-        self.implemented_features = ["signal", "channel", "rxtx", "proc", "int_detect"]
+        self.implemented_features = ["signal", "channel", "rxtx", "proc",
+                                     "int_detect"]
         self.supported_features = self.implemented_features.copy()
         Router.__init__(self, routerconfig)
         self.list_features()
