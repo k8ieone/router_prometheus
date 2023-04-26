@@ -225,10 +225,14 @@ class DdwrtRouter(Router):
 
     def get_int_temp(self, interface):
         """Returns the interface's temperature"""
-        return self.connection.run(self.wl_command
-                                   + " -i " + interface
-                                   + " phy_tempsense",
-                                   hide=True).stdout.strip().split()[0]
+        out = self.connection.run(self.wl_command
+                                  + " -i " + interface
+                                  + " phy_tempsense",
+                                  hide=True, warn=True)
+        if out.exited == 0:
+            return out.stdout.strip().split()[0]
+        else:
+            return None
 
     def get_dmu_temp(self):
         """Returns the CPU temperature (only available on Broadcom devices)"""
