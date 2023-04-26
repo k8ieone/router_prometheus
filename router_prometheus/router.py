@@ -400,11 +400,11 @@ class Dslac55uRouter(Router):
                     devlines.append(line)
             if len(devlines) != 0:
                 for line in devlines:
-                    try:
+                    if len(line.split()) >= 1:
                         ss_dict.update({
                             line.split()[0]: line.split()[1].replace("dBm", "")
                             })
-                    except IndexError:
+                    else:
                         print(devlines)
             return ss_dict
 
