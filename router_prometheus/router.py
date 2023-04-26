@@ -6,7 +6,7 @@ import json
 from . import exceptions
 
 features = {
-            "int_detect": "Interface detection",
+            "int_detect": "Wireless interface detection",
             "signal": "Client signal strength",
             "channel": "Current interface channel",
             "rxtx": "Bytes sent/received",
@@ -48,7 +48,7 @@ class Router:
             else:
                 self.rprint(
                     "proc: /proc/meminfo does not report MemAvailable," +
-                    " memory usage may not be accurate.")
+                    " memory stats may not be accurate.")
                 self.proc_taint = None
                 self.memfree_index = meminfo_output.index("MemFree:")
                 self.buffers_index = meminfo_output.index("Buffers:")
@@ -68,7 +68,8 @@ class Router:
 
     def list_features(self):
         alignment_length = len("int_detect") + 1
-        self.rprint("Wireless interfaces: " + str(self.wireless_interfaces))
+        self.rprint("int_detect: Wireless interfaces: " +
+                    str(self.wireless_interfaces))
         self.rprint("-------------------------------")
         for feature in features:
             feature_aligned = feature
@@ -312,8 +313,8 @@ class UbntRouter(Router):
         self.supported_features = self.implemented_features.copy()
         Router.__init__(self, routerconfig)
         if "wifi0" in self.wireless_interfaces:
-            self.rprint("Workaround - wifi0 is a dummy interface," +
-                        "removing it from the list")
+            self.rprint("int_detect: Workaround - wifi0 is a dummy" +
+                        " interface, removing it from the list")
             self.wireless_interfaces.remove("wifi0")
             self.int_detect_taint = None
         self.list_features()
@@ -352,7 +353,8 @@ class Dslac55uRouter(Router):
 
     def get_interfaces(self):
         """Manual override for wireless interfaces of the DSL-AC55U"""
-        self.rprint("Workaround - Skipped wireless interface detection")
+        self.rprint("int_detect: Workaround - Manually specified" +
+                    " wireless interfaces")
         self.supported_features.remove("int_detect")
         return ["ra0", "rai0"]
 
