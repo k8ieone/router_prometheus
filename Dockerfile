@@ -4,12 +4,12 @@ ENV py=$py
 
 RUN apt update && apt install -y $py wget python3-distutils $py-venv
 RUN wget https://bootstrap.pypa.io/get-pip.py
-RUN $py get-pip.py
+RUN $py get-pip.py --break-system-packages
 
 ADD . /build
 WORKDIR /build
 
-RUN $py -m pip install setuptools
+RUN $py -m pip install setuptools --break-system-packages
 
 RUN apt install -y gcc make rustc cargo libffi-dev libssl-dev $py-dev
 
