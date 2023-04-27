@@ -1,5 +1,5 @@
 import fabric  # type: ignore
-import invoke  # type: ignore
+# import invoke  # type: ignore
 # import paramiko  # type: ignore
 import json
 
@@ -234,9 +234,9 @@ class DdwrtRouter(Router):
                                       hide=True, warn=True)
             if out.exited == 0:
                 lines = out.stdout.strip().splitlines()
-                    for line in lines:
-                        if "channel" in line:
-                            return line.split()[1]
+                for line in lines:
+                    if "channel" in line:
+                        return line.split()[1]
             return None
 
     def get_ss_dict(self, interface):
