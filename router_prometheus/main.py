@@ -192,14 +192,10 @@ class RouterCollector:
             if "." in interface:
                 interface = interface.replace(".", "_")
             if "signal" in self.rtr.supported_features:
-                try:
+                if ss_dicts == []:
+                    clients = {}
+                else:
                     clients = translate_macs(self.rtr.ss_dicts[index])
-                except IndexError:
-                    print("Oooops, looks like we got into some trouble.")
-                    print("This would have caused an IndexError")
-                    print("This error happened on this router: " + router_name)
-                    print("Here's the ss_dicts:")
-                    print(self.rtr.ss_dicts)
                 yield GaugeMetricFamily(router_name + '_clients_connected_'
                                         + interface,
                                         'Number of connected clients',
