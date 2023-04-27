@@ -286,12 +286,12 @@ class DdwrtRouter(Router):
         Takes a MAC address string
         Returns a dict with a MAC and its RSSI value"""
 
-        try:
-            output = self.connection.run(self.wl_command +
-                                         " -i " + interface + " rssi " + mac,
-                                         hide=True)
+        output = self.connection.run(self.wl_command +
+                                     " -i " + interface + " rssi " + mac,
+                                     hide=True, warn=True)
+        if output.exited == 0:
             return {mac: output.stdout.strip().split()[-1]}
-        except invoke.exceptions.UnexpectedExit:
+        else:
             return {mac: None}
 
     def get_clients_list(self, interface):
