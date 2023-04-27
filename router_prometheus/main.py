@@ -215,8 +215,9 @@ class RouterCollector:
                     signal_gauge.add_metric(labels=[name],
                                             value=clients[client])
                 yield signal_gauge
-            if "channel" in self.rtr.supported_features and \
-               self.rtr.channels[index] is not None:
+            if "channel" in self.rtr.supported_features \
+               and len(self.rtr.channels) != 0 \
+               and self.rtr.channels[index] is not None:
                 yield GaugeMetricFamily(router_name + '_channel_' + interface,
                                         'Current wireless channel',
                                         value=self.rtr.channels[index])
