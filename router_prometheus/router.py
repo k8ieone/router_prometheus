@@ -302,7 +302,7 @@ class DdwrtRouter(Router):
         response = self.connection.run(self.wl_command +
                                        " -i " + interface + " assoclist",
                                        hide=True, warn=True)
-        if output.exited == 0:
+        if response.exited == 0:
             return self.parse_wl_output(response)
         else:
             return []
