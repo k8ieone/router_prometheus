@@ -230,11 +230,13 @@ class DdwrtRouter(Router):
                 if "current" in line:
                     return line.split()[-1]
         elif self.wl_command == "wl_atheros":
-            lines = self.connection.run("iw " + interface + " info",
-                                        hide=True).stdout.strip().splitlines()
-            for line in lines:
-                if "channel" in line:
-                    return line.split()[1]
+            out = self.connection.run("iw " + interface + " info",
+                                      hide=True, warn=True)
+            if out.exited == 0:
+                lines = out.stdout.strip().splitlines()
+                    for line in lines:
+                        if "channel" in line:
+                            return line.split()[1]
             return None
 
     def get_ss_dict(self, interface):
@@ -299,8 +301,11 @@ class DdwrtRouter(Router):
         Uses parse_wl_output to turn the wl output to a list"""
         response = self.connection.run(self.wl_command +
                                        " -i " + interface + " assoclist",
-                                       hide=True)
-        return self.parse_wl_output(response)
+                                       hide=True, warn=True)
+        if output.exited == 0:
+            return self.parse_wl_output(response)
+        else:
+            return []
 
 
 class UbntRouter(Router):
