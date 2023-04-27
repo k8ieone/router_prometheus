@@ -192,7 +192,7 @@ class RouterCollector:
             if "." in interface:
                 interface = interface.replace(".", "_")
             if "signal" in self.rtr.supported_features:
-                if ss_dicts == []:
+                if len(self.rtr.ss_dicts.ss_dicts) == 0:
                     clients = {}
                 else:
                     clients = translate_macs(self.rtr.ss_dicts[index])
