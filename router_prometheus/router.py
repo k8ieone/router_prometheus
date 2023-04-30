@@ -291,7 +291,7 @@ class DdwrtRouter(Router):
         output = self.connection.run(self.wl_command +
                                      " -i " + interface + " rssi " + mac,
                                      hide=True, warn=True)
-        if output.exited == 0:
+        if output.exited == 0 and len(output.stdout.strip().split()) > 0:
             return {mac: output.stdout.strip().split()[-1]}
         else:
             return {mac: None}
