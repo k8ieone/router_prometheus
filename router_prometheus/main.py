@@ -221,7 +221,9 @@ class RouterCollector:
                 yield GaugeMetricFamily(router_name + '_channel_' + interface,
                                         'Current wireless channel',
                                         value=self.rtr.channels[index])
-            if "rxtx" in self.rtr.supported_features:
+            if "rxtx" in self.rtr.supported_features \
+               and len(self.rtr.interface_rx) > 0 \
+               and len(self.rtr.interface_tx) > 0:
                 yield GaugeMetricFamily(router_name + '_rx_' + interface,
                                         'Bytes received',
                                         value=self.rtr.interface_rx[index])
