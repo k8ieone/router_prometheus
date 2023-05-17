@@ -372,10 +372,10 @@ class Dslac55uRouter(Router):
         return self.ate_output_channel(self.ate_output, interface)
 
     def ate_output_ss(self, ate_output, interface):
-        if interface == "ra0":
-            band = "2g"
-        elif interface == "rai0":
+        if "i" in interface:
             band = "5g"
+        else:
+            band = "2g"
         """Returns a dict with a MAC and its signal strength"""
         lines = ate_output.strip().splitlines()
         if "2.4 GHz radio is disabled" in lines and band == "2g":
@@ -414,10 +414,10 @@ class Dslac55uRouter(Router):
             return ss_dict
 
     def ate_output_channel(self, ate_output, interface):
-        if interface == "ra0":
-            band = "2g"
-        elif interface == "rai0":
+        if "i" in interface:
             band = "5g"
+        else:
+            band = "2g"
         """Returns a string containing the current channel"""
         lines = ate_output.strip().splitlines()
         if "2.4 GHz radio is disabled" in lines and band == "2g":
