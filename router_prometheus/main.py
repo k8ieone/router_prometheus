@@ -204,7 +204,7 @@ class RouterCollector:
                                                  + '_client_signal_'
                                                  + interface,
                                                  'Client Signal Strength',
-                                                 labels=["address"])
+                                                 labels=["clientname"])
                 for client in list(clients.keys()):
                     # This cleans the addresses for prometheus_client
                     # prometheus disallows the first character to be a number
