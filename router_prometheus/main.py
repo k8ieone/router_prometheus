@@ -66,7 +66,11 @@ def load_mapping_config():
         with open(MAPPING_CONFIG_LOCATION,
                   "r",
                   encoding="utf-8") as mapping_config:
-            return yaml.safe_load(mapping_config)
+            mapping = yaml.safe_load(mapping_config)
+        mapping_uppercase = {}
+        for mac in mapping:
+            mapping_uppercase[mac.upper()] = mapping[mac]
+        return mapping_uppercase
     except FileNotFoundError:
         print("Mapping config does not exist, mapping disabled...")
         return None
