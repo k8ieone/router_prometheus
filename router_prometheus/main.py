@@ -160,10 +160,10 @@ def translate_macs(rssi_dict):
     translated_dict = {}
     if rssi_dict is not None and MAPPING is not None:
         for mac in rssi_dict.keys():
-            if mac in MAPPING:
-                translated_dict.update({MAPPING[mac]: rssi_dict[mac]})
+            if mac.upper() in MAPPING:
+                translated_dict.update({MAPPING[mac.upper()]: rssi_dict[mac]})
             else:
-                translated_dict.update({mac: rssi_dict[mac]})
+                translated_dict.update({mac.upper(): rssi_dict[mac]})
         return translated_dict
     else:
         return rssi_dict
