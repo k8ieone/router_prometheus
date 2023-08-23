@@ -162,6 +162,20 @@ def translate_macs(rssi_dict):
     else:
         return rssi_dict
 
+def sanatizer(input_string):
+    """Replaces characters disallowed by prometheus_client"""
+    output_string = input_string.replace("-", "_")
+    output_string = output_string.replace(".", "_")
+    output_string = output_string.replace("!", "_not_")
+    output_string = output_string.replace("@", "_at_")
+    if output_string[0].isnumeric():
+        numbers = ['zero', 'one', 'two', 'three',
+                   'four', 'five', 'six','seven',
+                   'eight', 'nine']
+        n = int(output_string[0])
+        output_string = output_string.replace(output_string[0],
+                                              numbers[n] + "_", 1)
+    return output_string
 
 class RouterCollector:
     """Custom collector class for prometheus_client"""
@@ -172,7 +186,7 @@ class RouterCollector:
     def collect(self):
         """This is the function internally called by prometheus_client"""
         self.rtr.update()
-        router_name = self.rtr.name.replace("-", "_").lower()
+        router_name = sanatizer(self.rtr.name)
         if "proc" in self.rtr.supported_features:
             yield GaugeMetricFamily(router_name + '_mem_percent_used',
                                     'Percent of memory used',
@@ -189,8 +203,7 @@ class RouterCollector:
                                     'CPU temperature',
                                     value=self.rtr.dmu_temp)
         for index, interface in enumerate(self.rtr.wireless_interfaces):
-            if "." in interface:
-                interface = interface.replace(".", "_")
+            interface = sanatizer(interface)
             if "signal" in self.rtr.supported_features:
                 if len(self.rtr.ss_dicts) == 0:
                     clients = {}
@@ -200,8 +213,7 @@ class RouterCollector:
                                         + interface,
                                         'Number of connected clients',
                                         value=len(clients.keys()))
-                signal_gauge = GaugeMetricFamily(router_name
-                                                 + '_client_signal_'
+                signal_gauge = GaugeMetricFamily(router_name + '_client_signal_'
                                                  + interface,
                                                  'Client Signal Strength',
                                                  labels=["clientname"])
