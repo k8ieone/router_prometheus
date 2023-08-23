@@ -310,6 +310,91 @@ class DdwrtRouter(Router):
             return []
 
 
+class OwrtRouter(Router):
+    """Inherits from the generic router class and
+    adds OpenWRT-specific stuff"""
+
+    def __init__(self, routerconfig):
+        self.implemented_features = ["channel", "rxtx", "proc",
+                                     "int_detect", "signal"]
+        self.supported_features = self.implemented_features.copy()
+        Router.__init__(self, routerconfig)
+        self.list_features()
+        self.device_offset = None
+        self.ss_offset = None
+
+    def __str__(self):
+        return "OpenWRT " + Router.__str__(self)
+
+    def get_channel(self, interface):
+        """Returns the interface's current channel"""
+        output = self.connection.run("iw " + interface + " info",
+                                     hide=True).stdout.strip().splitlines()
+        return output[7].split()[1]
+
+    def get_ss_dict(self, interface):
+        """Overrides the generic dummy function for getting
+        the signal strength dictionary"""
+        iwdump = self.get_iw_dump(interface)
+        if self.device_offset is not None:
+            return self.iw_dump_ss_optimized(iwdump)
+        else:
+            self.iw_dump_offsets(iwdump)
+            return self.iw_dump_ss(iwdump)
+        return self.iw_dump_ss(iwdump)
+
+    def get_iw_dump(self, interface):
+        """Runs iw dev INT station dump and returns its lines as a list"""
+        iwdump = self.connection.run("iw dev " + interface + " station dump",
+                                     hide=True).stdout.strip().splitlines()
+        return iwdump
+
+    def iw_dump_offsets(self, iwdump):
+        """Counts the number of lines between devices
+        and detect signal strength line number"""
+        devices = 0
+        for index, line in enumerate(iwdump):
+            if line.strip().split()[0] == "signal:" and devices == 1:
+                self.ss_offset = index
+            elif line.strip().split()[0] == "Station":
+                if devices == 0:
+                    first_device_line = index
+                elif devices == 1:
+                    self.device_offset = index - first_device_line
+                    self.rprint("Found iwdump device offset, switching "
+                                + "to optimized parser function")
+                    break
+                devices += 1
+
+    def iw_dump_ss(self, iwdump):
+        """Extracts device MAC and its signal strength
+        by iterating through the output of iw dev INT station dump"""
+        ss_dict = {}
+        for index, line in enumerate(iwdump):
+            if line.strip().split()[0] == "Station":
+                address = line.strip().split()[1]
+            if line.strip().split()[0] == "signal:":
+                ss = line.strip().split()[1]
+                ss_dict[address] = ss
+        return ss_dict
+
+    def iw_dump_ss_optimized(self, iwdump):
+        """Extracts device MAC and its signal strength
+        by jumping to speciffic lines of the output
+        of iw dev INT station dump"""
+        ss_dict = {}
+        # Guess the number of devices based on number of lines in  the dump
+        devices = len(iwdump) // self.device_offset
+        # Use the gained parameters for jumping to different lines in the dump
+        for device in range(devices):
+            device_line = device * self.device_offset
+            ss_line = device_line + self.ss_offset
+            address = iwdump[device_line].split()[1]
+            ss = iwdump[ss_line].strip().split()[1]
+            ss_dict[address] = ss
+        return ss_dict
+
+
 class UbntRouter(Router):
     """Inherits from the generic router class and
     adds Ubiquiti-specific stuff"""
