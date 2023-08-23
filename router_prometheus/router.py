@@ -160,9 +160,11 @@ class Router:
                                          hide=True).stdout.strip().split()
         wireless_interfaces = []
         for interface in interfaces:
-            if "wireless" in self.connection.run("ls /sys/class/net/"
-                                                 + interface,
-                                                 hide=True).stdout.strip():
+            evaluated_interface = self.connection.run("ls /sys/class/net/"
+                                                      + interface,
+                                                      hide=True).stdout.strip()
+            if "wireless" in evaluated_interface or \
+               "phy80211" in evaluated_interface:
                 wireless_interfaces.append(interface)
         return wireless_interfaces
 
