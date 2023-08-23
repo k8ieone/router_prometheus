@@ -164,6 +164,7 @@ def translate_macs(rssi_dict):
     else:
         return rssi_dict
 
+
 def sanatizer(input_string):
     """Replaces characters disallowed by prometheus_client"""
     output_string = input_string.replace("-", "_")
@@ -172,12 +173,13 @@ def sanatizer(input_string):
     output_string = output_string.replace("@", "_at_")
     if output_string[0].isnumeric():
         numbers = ['zero', 'one', 'two', 'three',
-                   'four', 'five', 'six','seven',
+                   'four', 'five', 'six', 'seven',
                    'eight', 'nine']
         n = int(output_string[0])
         output_string = output_string.replace(output_string[0],
                                               numbers[n] + "_", 1)
     return output_string
+
 
 class RouterCollector:
     """Custom collector class for prometheus_client"""
@@ -215,7 +217,8 @@ class RouterCollector:
                                         + interface,
                                         'Number of connected clients',
                                         value=len(clients.keys()))
-                signal_gauge = GaugeMetricFamily(router_name + '_client_signal_'
+                signal_gauge = GaugeMetricFamily(router_name
+                                                 + '_client_signal_'
                                                  + interface,
                                                  'Client Signal Strength',
                                                  labels=["clientname"])
