@@ -1,6 +1,6 @@
 # router_prometheus
 
-![Example Grafana Dashboard](grafana_screenshot.png)
+![Example Grafana Dashboard](.github/grafana_screenshot.png)
 
 
 ## Project goals
