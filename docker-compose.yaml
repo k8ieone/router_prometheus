@@ -1,0 +1,10 @@
+services:
+  router_prometheus:
+    image: ghcr.io/a13xie/router_prometheus:latest
+    #build:
+    #  context: .
+    #  dockerfile: Dockerfile.dev
+    volumes:
+      - ./config:/config
+    ports:
+      - "9000:9000"
