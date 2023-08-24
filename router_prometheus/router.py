@@ -110,6 +110,9 @@ class Router:
         if "proc" in self.supported_features:
             if self.connection.is_connected:
                 self.loads = self.get_system_load()
+            else:
+                self.connect()
+            if self.connection.is_connected:
                 self.mem_used = self.get_memory_usage()
             else:
                 self.connect()
