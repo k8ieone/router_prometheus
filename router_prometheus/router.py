@@ -108,24 +108,45 @@ class Router:
             self.interface_rx = []
             self.interface_tx = []
         if "proc" in self.supported_features:
-            self.loads = self.get_system_load()
-            self.mem_used = self.get_memory_usage()
+            if self.connection.is_connected:
+                self.loads = self.get_system_load()
+                self.mem_used = self.get_memory_usage()
+            else:
+                self.connect()
         if "int_temp" in self.supported_features:
             self.int_temperatures = []
         if "dmu_temp" in self.supported_features:
-            self.dmu_temp = self.get_dmu_temp()
+            if self.connection.is_connected:
+                self.dmu_temp = self.get_dmu_temp()
+            else:
+                self.connect()
         for interface in self.wireless_interfaces:
             if "int_temp" in self.supported_features:
-                self.int_temperatures.append(self.get_int_temp(interface))
+                if self.connection.is_connected:
+                    self.int_temperatures.append(self.get_int_temp(interface))
+                else:
+                    self.connect()
             if "signal" in self.supported_features:
-                self.ss_dicts.append(self.get_ss_dict(interface))
+                if self.connection.is_connected:
+                    self.ss_dicts.append(self.get_ss_dict(interface))
+                else:
+                    self.connect()
             if "channel" in self.supported_features:
-                self.channels.append(self.get_channel(interface))
+                if self.connection.is_connected:
+                    self.channels.append(self.get_channel(interface))
+                else:
+                    self.connect()
             if "rxtx" in self.supported_features:
-                self.interface_rx.append(self.get_interface_rxtx(interface,
-                                                                 "rx"))
-                self.interface_tx.append(self.get_interface_rxtx(interface,
-                                                                 "tx"))
+                if self.connection.is_connected:
+                    self.interface_rx.append(self.get_interface_rxtx(interface,
+                                                                     "rx"))
+                else:
+                    self.connect()
+                if self.connection.is_connected:
+                    self.interface_tx.append(self.get_interface_rxtx(interface,
+                                                                     "tx"))
+                else:
+                    self.connect()
 
     def get_interface_rxtx(self, interface, selector):
         """Takes an interface and selector (either rx or tx)
