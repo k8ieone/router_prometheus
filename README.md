@@ -3,29 +3,33 @@
 ![Example Grafana Dashboard](.github/grafana_screenshot.png)
 
 
-## Project goals
+## Features
  - [X] YML configuration file for defining global options and routers
- - [X] Have different backends to get metrics from different routers so that the project is extendable to more router brands and systems
+ - [X] Mapping MAC addresses to user-friendly device names
+ - [X] Different [backends](#available-backends) for different systems and brands so that the project is easily extendable
  - [ ] Using public key authentication in SSH
  - [X] Expose a Prometheus endpoint so metrics can be scraped by Prometheus scrapers
  - [X] Docker container
+
+Other project goals are tracked with in [issues](https://github.com/a13xie/router_prometheus/issues)
 
 ## Collected metrics
 
 | Metric | Description | Required feature |
 | :-------------- | :-------------: | -------------: |
-| `ROUTER_clients_connected_INTERFACE`    | Number of devices connected to `INTERFACE` | `signal` |
-| `ROUTER_client_signal_INTERFACE_DEVICE` | Current [signal strength](https://www.securedgenetworks.com/blog/wifi-signal-strength#what-is-a-good-wifi-signal-stength) (in dBm) for each connected `DEVICE` | `signal` |
-| `ROUTER_channel_INTERFACE` | `INTERFACE`'s [channel](https://en.wikipedia.org/wiki/List_of_WLAN_channels) | `channel` |
-| `ROUTER_rx_INTERFACE`, `ROUTER_tx_INTERFACE` | Total number of bytes received/transmitted on a wireless `INTERFACE`, read from `/sys/class/net/INTERFACE/statistics/rx_bytes` | `rxtx` |
-| `ROUTER_load` | Average load (over the last 1, 5 and 15 minutes), read from `/proc/loadavg` | `proc` |
-| `ROUTER_mem_percent_used` | Used memory in %, calculated from `/proc/meminfo` | `proc` |
+| `router_ap_client_signal` | Current [signal strength](https://www.securedgenetworks.com/blog/wifi-signal-strength#what-is-a-good-wifi-signal-stength) (in dBm) for each connected client device | `signal` |
+| `router_ap_channel` | Current [channel](https://en.wikipedia.org/wiki/List_of_WLAN_channels) of each interface | `channel` |
+| `router_net_sent`, `router_net_recv` | Total number of bytes received/transmitted on a wireless interface, read from `/sys/class/net/INTERFACE/statistics/rx_bytes` | `rxtx` |
+| `router_system_load` | Average load (over the last 1, 5 and 15 minutes), read from `/proc/loadavg` | `proc` |
+| `router_mem_percent_used` | Used memory in %, calculated from `/proc/meminfo` | `proc` |
+| `router_thermal` | Temperature info from the router's temperature probes | `thermal` |
 
 ## Available backends
 
 | Backend | Description | Available features |
 | :-------------- | :-------------: | -------------: |
-| `dd-wrt`    | Should support all routers running [DD-WRT](https://dd-wrt.com/) | `signal`, `channel`, `rxtx`, `proc` |
+| `dd-wrt`    | Should support all routers running [DD-WRT](https://dd-wrt.com/) | `signal`, `channel`, `rxtx`, `proc`, `thermal` |
+| `openwrt`    | Should support all routers running [OpenWRT](https://openwrt.org/) | `signal`, `channel`, `rxtx`, `proc` |
 | `ubnt`      | Should work on most Ubiquiti bridge devices | `signal`, `channel`, `rxtx`, `proc` |
 | `dsl-ac55u` | Only supports the Asus DSL-AC55U | `signal`, `channel`, `rxtx`, `proc` |
 
