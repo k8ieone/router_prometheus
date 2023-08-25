@@ -343,12 +343,31 @@ class OwrtRouter(Router):
                                      "int_detect", "signal"]
         self.supported_features = self.implemented_features.copy()
         Router.__init__(self, routerconfig)
+        self.initial_interfaces = self.wireless_interfaces.copy()
         self.list_features()
         self.device_offset = None
         self.ss_offset = None
 
     def __str__(self):
         return "OpenWRT " + Router.__str__(self)
+
+    def update(self):
+        self.check_interfaces()
+        super().update()
+
+    def check_interfaces(self):
+        """A compromise between updating the interface list
+        with every update (slow) and going in blind and expecting the
+        interface to always be there."""
+        all_interfaces = self.connection.run("ls /sys/class/net",
+                                             hide=True).stdout.strip().split()
+        for interface in self.initial_interfaces:
+            if interface not in all_interfaces or \
+               interface not in self.wireless_interfaces:
+                self.wireless_interfaces = self.get_interfaces()
+                self.rprint("int_detect: Wireless interfaces: " +
+                            str(self.wireless_interfaces))
+                break
 
     def get_channel(self, interface):
         """Returns the interface's current channel"""
