@@ -186,12 +186,12 @@ class RouterCollector:
                                       labels=["router"])
         # TODO: Reimplement temperature monitoring
         temp_gauge = GaugeMetricFamily('router_thermal',
-                                      'Router temperature probes',
-                                      labels=["router"])
+                                       'Router temperature probes',
+                                       labels=["router"])
         signal_gauge = GaugeMetricFamily('router_ap_client_signal',
-                                        'Client Signal Strength',
-                                        labels=["router",
-                                                "clientname", "interface"])
+                                         'Client Signal Strength',
+                                         labels=["router",
+                                                 "clientname", "interface"])
         channgel_gauge = GaugeMetricFamily('router_ap_channel',
                                            'Current wireless channel',
                                            labels=["router", "interface"])
@@ -214,7 +214,7 @@ class RouterCollector:
             if "proc" in rtr.supported_features:
                 for i, l in enumerate(["1", "5", "15"]):
                     load_gauge.add_metric(labels=[rtr.name, l + "m"],
-                                        value=rtr.loads[i])
+                                          value=rtr.loads[i])
                 mem_gauge.add_metric(labels=[rtr.name],
                                      value=rtr.mem_used)
             if "thermal" in rtr.supported_features:
@@ -235,18 +235,18 @@ class RouterCollector:
                         signal_gauge.add_metric(labels=[rtr.name, client,
                                                         interface],
                                                 value=clients[client])
-                if "channel" in rtr.supported_features \
-                and len(rtr.channels) != 0 \
-                and rtr.channels[index] is not None:
+                if "channel" in rtr.supported_features and \
+                   len(rtr.channels) != 0 and \
+                   rtr.channels[index] is not None:
                     channgel_gauge.add_metric(labels=[rtr.name, interface],
                                               value=rtr.channels[index])
-                if "rxtx" in rtr.supported_features \
-                and len(rtr.interface_rx) > 0 \
-                and len(rtr.interface_tx) > 0:
+                if "rxtx" in rtr.supported_features and \
+                   len(rtr.interface_rx) > 0 and \
+                   len(rtr.interface_tx) > 0:
                     tx_gauge.add_metric(labels=[rtr.name, interface],
-                                              value=rtr.interface_tx[index])
+                                        value=rtr.interface_tx[index])
                     rx_gauge.add_metric(labels=[rtr.name, interface],
-                                              value=rtr.interface_rx[index])
+                                        value=rtr.interface_rx[index])
         for gauge in gauges:
             yield gauge
 
