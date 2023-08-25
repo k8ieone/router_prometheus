@@ -169,92 +169,86 @@ def translate_macs(rssi_dict):
         return rssi_dict
 
 
-def sanatizer(input_string):
-    """Replaces characters disallowed by prometheus_client"""
-    output_string = input_string.replace("-", "_")
-    output_string = output_string.replace(".", "_")
-    output_string = output_string.replace("!", "_not_")
-    output_string = output_string.replace("@", "_at_")
-    if output_string[0].isnumeric():
-        numbers = ['zero', 'one', 'two', 'three',
-                   'four', 'five', 'six', 'seven',
-                   'eight', 'nine']
-        n = int(output_string[0])
-        output_string = output_string.replace(output_string[0],
-                                              numbers[n] + "_", 1)
-    return output_string
-
-
 class RouterCollector:
     """Custom collector class for prometheus_client"""
 
-    def __init__(self, rtr):
-        self.rtr = rtr
+    def __init__(self, routers):
+        self.routers = routers
 
     def collect(self):
         """This is the function internally called by prometheus_client"""
-        self.rtr.update()
-        router_name = sanatizer(self.rtr.name)
-        if "proc" in self.rtr.supported_features:
-            yield GaugeMetricFamily(router_name + '_mem_percent_used',
-                                    'Percent of memory used',
-                                    value=self.rtr.mem_used)
-            load_gauge = GaugeMetricFamily(router_name + '_load',
-                                           'Average load',
-                                           labels=["t"])
-            for i, l in enumerate(["1", "5", "15"]):
-                load_gauge.add_metric(labels=[l + "m"],
-                                      value=self.rtr.loads[i])
-            yield load_gauge
-        if "dmu_temp" in self.rtr.supported_features:
-            yield GaugeMetricFamily(router_name + '_cpu_temp',
-                                    'CPU temperature',
-                                    value=self.rtr.dmu_temp)
-        for index, interface in enumerate(self.rtr.wireless_interfaces):
-            interface = sanatizer(interface)
-            if "signal" in self.rtr.supported_features:
-                if len(self.rtr.ss_dicts) == 0:
-                    clients = {}
-                else:
-                    clients = translate_macs(self.rtr.ss_dicts[index])
-                yield GaugeMetricFamily(router_name + '_clients_connected_'
-                                        + interface,
-                                        'Number of connected clients',
-                                        value=len(clients.keys()))
-                signal_gauge = GaugeMetricFamily(router_name
-                                                 + '_client_signal_'
-                                                 + interface,
-                                                 'Client Signal Strength',
-                                                 labels=["clientname"])
-                for client in list(clients.keys()):
-                    # This cleans the addresses for prometheus_client
-                    # prometheus disallows the first character to be a number
-                    if client[0].isnumeric():
-                        name = "m_" + client.replace(":", "_")
+        gauges = []
+        load_gauge = GaugeMetricFamily('router_system_load',
+                                       'Average system load',
+                                       labels=["router", "t"])
+        mem_gauge = GaugeMetricFamily('router_mem_percent_used',
+                                      'Percent of memory used',
+                                      labels=["router"])
+        # TODO: Reimplement temperature monitoring
+        temp_gauge = GaugeMetricFamily('router_thermal',
+                                       'Router temperature probes',
+                                       labels=["router"])
+        signal_gauge = GaugeMetricFamily('router_ap_client_signal',
+                                         'Client Signal Strength',
+                                         labels=["router",
+                                                 "clientname", "interface"])
+        channgel_gauge = GaugeMetricFamily('router_ap_channel',
+                                           'Current wireless channel',
+                                           labels=["router", "interface"])
+        tx_gauge = GaugeMetricFamily('router_net_sent',
+                                     'Bytes sent',
+                                     labels=["router", "interface"])
+        rx_gauge = GaugeMetricFamily('router_net_recv',
+                                     'Bytes received',
+                                     labels=["router", "interface"])
+        # There has to be a nicer way to append all of these
+        gauges.append(load_gauge)
+        gauges.append(mem_gauge)
+        gauges.append(temp_gauge)
+        gauges.append(signal_gauge)
+        gauges.append(channgel_gauge)
+        gauges.append(tx_gauge)
+        gauges.append(rx_gauge)
+        for rtr in self.routers:
+            rtr.update()
+            if "proc" in rtr.supported_features:
+                for i, l in enumerate(["1", "5", "15"]):
+                    load_gauge.add_metric(labels=[rtr.name, l + "m"],
+                                          value=rtr.loads[i])
+                mem_gauge.add_metric(labels=[rtr.name],
+                                     value=rtr.mem_used)
+            if "thermal" in rtr.supported_features:
+                pass
+            #    yield GaugeMetricFamily('router_cpu_temp',
+            #                            'CPU temperature',
+            #                            value=rtr.dmu_temp)
+            #    yield GaugeMetricFamily(router_name + '_temp_' + interface,
+            #                            'Interface temperature',
+            #                            value=rtr.int_temperatures[index])
+            for index, interface in enumerate(rtr.wireless_interfaces):
+                if "signal" in rtr.supported_features:
+                    if len(rtr.ss_dicts) == 0:
+                        clients = {}
                     else:
-                        name = client.replace(":", "_")
-                    signal_gauge.add_metric(labels=[name],
-                                            value=clients[client])
-                yield signal_gauge
-            if "channel" in self.rtr.supported_features \
-               and len(self.rtr.channels) != 0 \
-               and self.rtr.channels[index] is not None:
-                yield GaugeMetricFamily(router_name + '_channel_' + interface,
-                                        'Current wireless channel',
-                                        value=self.rtr.channels[index])
-            if "rxtx" in self.rtr.supported_features \
-               and len(self.rtr.interface_rx) > 0 \
-               and len(self.rtr.interface_tx) > 0:
-                yield GaugeMetricFamily(router_name + '_rx_' + interface,
-                                        'Bytes received',
-                                        value=self.rtr.interface_rx[index])
-                yield GaugeMetricFamily(router_name + '_tx_' + interface,
-                                        'Bytes transmitted',
-                                        value=self.rtr.interface_tx[index])
-            if "int_temp" in self.rtr.supported_features:
-                yield GaugeMetricFamily(router_name + '_temp_' + interface,
-                                        'Interface temperature',
-                                        value=self.rtr.int_temperatures[index])
+                        clients = translate_macs(rtr.ss_dicts[index])
+                    for client in list(clients.keys()):
+                        signal_gauge.add_metric(labels=[rtr.name, client,
+                                                        interface],
+                                                value=clients[client])
+                if "channel" in rtr.supported_features and \
+                   len(rtr.channels) != 0 and \
+                   rtr.channels[index] is not None:
+                    channgel_gauge.add_metric(labels=[rtr.name, interface],
+                                              value=rtr.channels[index])
+                if "rxtx" in rtr.supported_features and \
+                   len(rtr.interface_rx) > 0 and \
+                   len(rtr.interface_tx) > 0:
+                    tx_gauge.add_metric(labels=[rtr.name, interface],
+                                        value=rtr.interface_tx[index])
+                    rx_gauge.add_metric(labels=[rtr.name, interface],
+                                        value=rtr.interface_rx[index])
+        for gauge in gauges:
+            yield gauge
 
 
 def main():
@@ -266,9 +260,7 @@ def main():
     global MAPPING
     MAPPING = load_mapping_config()
     collectors = []
-    for rtr in routers:
-        print("Adding collector for " + rtr.name)
-        collectors.append(RouterCollector(rtr))
+    collectors.append(RouterCollector(routers))
     for collector in collectors:
         REGISTRY.register(collector)
     if not config["cpython_metrics"]:
