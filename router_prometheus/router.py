@@ -347,6 +347,7 @@ class OwrtRouter(Router):
         self.list_features()
         self.device_offset = None
         self.ss_offset = None
+        self.channel_lines = {}
 
     def __str__(self):
         return "OpenWRT " + Router.__str__(self)
@@ -371,9 +372,32 @@ class OwrtRouter(Router):
 
     def get_channel(self, interface):
         """Returns the interface's current channel"""
-        output = self.connection.run("iw " + interface + " info",
-                                     hide=True).stdout.strip().splitlines()
-        return output[7].split()[1]
+        iw_info = self.connection.run("iw " + interface + " info",
+                                      hide=True).stdout.strip().splitlines()
+        return self.iw_channel(interface, iw_info)
+
+    def iw_channel(self, interface, iw_info):
+        """Returns the interface's current channel"""
+        # Might later be modified for extracting other info as well
+        if interface not in self.channel_lines:
+            self.get_channel_line(interface, iw_info)
+        elif iw_info[self.channel_lines[interface]].strip().split()[0] != "channel":
+            self.rprint("Fixing " + interface + "'s channel line number")
+            self.get_channel_line(interface, iw_info)
+        if interface not in self.channel_lines:
+            return 0
+        else:
+            return iw_info[self.channel_lines[interface]].strip().split()[1]
+
+    def get_channel_line(self, interface, iw_info):
+        """Finds the line number containing the channel info"""
+        for index, line in enumerate(iw_info):
+            if line.strip().split()[0] == "channel":
+                self.rprint("Found " + interface + "'s channel on line "
+                            + str(index))
+                self.channel_lines[interface] = index
+                break
+        self.rprint("Unable to find " + interface + "'s channel")
 
     def get_ss_dict(self, interface):
         """Overrides the generic dummy function for getting
