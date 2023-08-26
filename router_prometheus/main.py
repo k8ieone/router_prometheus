@@ -245,7 +245,7 @@ class RouterCollector:
                     elif int(rtr.channels[index]) == 0:
                         band = "OFF"
                 if "ssid" in rtr.supported_features:
-                    pass
+                    networkname = rtr.ssids[interface]
                 if "signal" in rtr.supported_features:
                     if len(rtr.ss_dicts) == 0:
                         clients = {}
