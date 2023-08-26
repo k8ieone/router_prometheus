@@ -381,7 +381,8 @@ class OwrtRouter(Router):
         # Might later be modified for extracting other info as well
         if interface not in self.channel_lines:
             self.get_channel_line(interface, iw_info)
-        elif iw_info[self.channel_lines[interface]].strip().split()[0] != "channel":
+        elif iw_info[self.channel_lines[interface]].strip()\
+                                                   .split()[0] != "channel":
             self.rprint("Fixing " + interface + "'s channel line number")
             self.get_channel_line(interface, iw_info)
         if interface not in self.channel_lines:
