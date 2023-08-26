@@ -195,10 +195,12 @@ class RouterCollector:
         signal_gauge = GaugeMetricFamily('router_ap_client_signal',
                                          'Client Signal Strength',
                                          labels=["router",
-                                                 "clientname", "interface"])
+                                                 "clientname", "interface",
+                                                 "band", "networkname"])
         channgel_gauge = GaugeMetricFamily('router_ap_channel',
                                            'Current wireless channel',
-                                           labels=["router", "interface"])
+                                           labels=["router", "interface",
+                                                   "band", "networkname"])
         tx_gauge = GaugeMetricFamily('router_net_sent',
                                      'Bytes sent',
                                      labels=["router", "interface"])
@@ -230,6 +232,20 @@ class RouterCollector:
             #                            'Interface temperature',
             #                            value=rtr.int_temperatures[index])
             for index, interface in enumerate(rtr.wireless_interfaces):
+                band = ""
+                networkname = ""
+                if "channel" in rtr.supported_features and \
+                   len(rtr.channels) != 0:
+                    if int(rtr.channels[index]) < 15 and \
+                       int(rtr.channels[index]) > 0:
+                        band = "2.4"
+                    elif int(rtr.channels[index]) < 178 and \
+                       int(rtr.channels[index]) > 31:
+                        band = "5"
+                    elif int(rtr.channels[index]) == 0:
+                        band = "OFF"
+                if "ssid" in rtr.supported_features:
+                    pass
                 if "signal" in rtr.supported_features:
                     if len(rtr.ss_dicts) == 0:
                         clients = {}
@@ -237,12 +253,13 @@ class RouterCollector:
                         clients = translate_macs(rtr.ss_dicts[index])
                     for client in list(clients.keys()):
                         signal_gauge.add_metric(labels=[rtr.name, client,
-                                                        interface],
+                                                        interface, band,
+                                                        networkname],
                                                 value=clients[client])
                 if "channel" in rtr.supported_features and \
-                   len(rtr.channels) != 0 and \
-                   rtr.channels[index] is not None:
-                    channgel_gauge.add_metric(labels=[rtr.name, interface],
+                   len(rtr.channels) != 0:
+                    channgel_gauge.add_metric(labels=[rtr.name, interface,
+                                                      band, networkname],
                                               value=rtr.channels[index])
                 if "rxtx" in rtr.supported_features and \
                    len(rtr.interface_rx) > 0 and \
