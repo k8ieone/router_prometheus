@@ -12,7 +12,8 @@ features = {
             "rxtx": "Bytes sent/received",
             "proc": "Various stats from /proc",
             "int_temp": "Interface temperature",
-            "dmu_temp": "CPU temperature"}
+            "dmu_temp": "CPU temperature",
+            "ssid": "Network name"}
 
 
 class Router:
@@ -107,6 +108,8 @@ class Router:
         if "rxtx" in self.supported_features:
             self.interface_rx = []
             self.interface_tx = []
+        if "ssid" in self.supported_features:
+            self.ssids = {}
         if "proc" in self.supported_features:
             if self.connection.is_connected:
                 self.loads = self.get_system_load()
@@ -150,6 +153,9 @@ class Router:
                                                                      "tx"))
                 else:
                     self.connect()
+            if "ssid" in self.supported_features:
+                if self.connection.is_connected:
+                    self.ssid_info[interface] = self.get_ssid(interface)
 
     def get_interface_rxtx(self, interface, selector):
         """Takes an interface and selector (either rx or tx)
