@@ -239,8 +239,8 @@ class RouterCollector:
                     if int(rtr.channels[index]) < 15 and \
                        int(rtr.channels[index]) > 0:
                         band = "2.4"
-                    elif int(rtr.channels[index]) < 178 and \
-                       int(rtr.channels[index]) > 31:
+                    elif int(rtr.channels[index]) < 178 and int(
+                             rtr.channels[index]) > 31:
                         band = "5"
                     elif int(rtr.channels[index]) == 0:
                         band = "OFF"

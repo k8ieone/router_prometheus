@@ -380,7 +380,8 @@ class OwrtRouter(Router):
     def get_channel(self, interface):
         """Returns the interface's current channel"""
         self.iw_info = self.connection.run("iw " + interface + " info",
-                                      hide=True).stdout.strip().splitlines()
+                                           hide=True).stdout\
+                                                     .strip().splitlines()
         return self.iw_channel(interface, self.iw_info)
 
     def get_ssid(self, interface):
@@ -404,7 +405,7 @@ class OwrtRouter(Router):
         if interface not in self.ssid_lines:
             self.get_iw_lines(interface, iw_info)
         elif iw_info[self.ssid_lines[interface]].strip()\
-                                                   .split()[0] != "ssid":
+                                                .split()[0] != "ssid":
             self.rprint("Fixing " + interface + "'s SSID line number")
             self.get_iw_lines(interface, iw_info)
         if interface not in self.ssid_lines:
