@@ -546,6 +546,9 @@ class Dslac55uRouter(Router):
             return {}
         elif "5 GHz radio is disabled" in lines and band == "5g":
             return {}
+        elif "Get channel fail!!" in lines:
+            self.rprint("Router was unable to return the client list")
+            return {}
         else:
             # print(lines)
             # print("^^^^^^^^^^^^^^^^^^^^^^^ raw lines for " + band)
