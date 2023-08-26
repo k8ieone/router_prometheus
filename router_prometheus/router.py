@@ -248,7 +248,7 @@ class DdwrtRouter(Router):
                                            " -i " + interface + " radio",
                                            hide=True).stdout.strip()
             if radio_on == "0x0001":
-                return None
+                return 0
             lines = self.connection.run(self.wl_command +
                                         " -i " + interface + " channel",
                                         hide=True).stdout.strip().splitlines()
@@ -263,7 +263,7 @@ class DdwrtRouter(Router):
                 for line in lines:
                     if "channel" in line:
                         return line.split()[1]
-            return None
+            return 0
 
     def get_ss_dict(self, interface):
         """Overrides the generic dummy function for getting
@@ -523,7 +523,7 @@ class Dslac55uRouter(Router):
 
     def get_interfaces(self):
         """Manual override for wireless interfaces of the DSL-AC55U"""
-        self.rprint("int_detect: Workaround - Manually specified" +
+        self.rprint("int_detect: Workaround - Hard-coded" +
                     " wireless interfaces")
         self.supported_features.remove("int_detect")
         return ["ra0", "rai0"]
@@ -589,9 +589,12 @@ class Dslac55uRouter(Router):
         """Returns a string containing the current channel"""
         lines = ate_output.strip().splitlines()
         if "2.4 GHz radio is disabled" in lines and band == "2g":
-            return None
+            return 0
         elif "5 GHz radio is disabled" in lines and band == "5g":
-            return None
+            return 0
+        elif "Get channel fail!!" in lines:
+            self.rprint("Router was unable to return the channel number")
+            return 0
         channel_lines = []
         for line in lines:
             if "Channel" in line:
