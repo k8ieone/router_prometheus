@@ -391,13 +391,15 @@ class OwrtRouter(Router):
 
     def get_channel_line(self, interface, iw_info):
         """Finds the line number containing the channel info"""
+        if interface in self.channel_lines:
+            del self.channel_lines[interface]
         for index, line in enumerate(iw_info):
             if line.strip().split()[0] == "channel":
-                self.rprint("Found " + interface + "'s channel on line "
-                            + str(index))
                 self.channel_lines[interface] = index
                 break
-        self.rprint("Unable to find " + interface + "'s channel")
+        if interface not in self.channel_lines:
+            self.rprint("Unable to find " + interface + "'s channel")
+            self.rprint(interface + " is likely not up")
 
     def get_ss_dict(self, interface):
         """Overrides the generic dummy function for getting
