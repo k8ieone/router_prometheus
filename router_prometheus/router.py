@@ -61,13 +61,13 @@ class Router:
             self.connection.close()
 
     def __str__(self):
-        return "router " + self.name + " at " + self.address
+        return self.name + ": generic backend" + " at " + self.address
 
     def rprint(self, printstring):
         print(self.name + ": " + printstring)
 
     def list_features(self):
-        alignment_length = len("int_detect") + 1
+        alignment_length = len((max(features.keys(), key=len))) + 1
         self.rprint("int_detect: Wireless interfaces: " +
                     str(self.wireless_interfaces))
         self.rprint("-------------------------------")
@@ -239,7 +239,7 @@ class DdwrtRouter(Router):
         self.list_features()
 
     def __str__(self):
-        return "DD-WRT " + Router.__str__(self)
+        return self.name + ": DD-WRT backend" + " at " + self.address
 
     def get_channel(self, interface):
         """Returns the interface's current channel"""
@@ -350,7 +350,7 @@ class OwrtRouter(Router):
         self.channel_lines = {}
 
     def __str__(self):
-        return "OpenWRT " + Router.__str__(self)
+        return self.name + ": OpenWRT backend" + " at " + self.address
 
     def update(self):
         self.check_interfaces()
@@ -489,7 +489,7 @@ class UbntRouter(Router):
         self.list_features()
 
     def __str__(self):
-        return "Ubiquiti " + Router.__str__(self)
+        return self.name + ": Ubiquiti backend" + " at " + self.address
 
     def get_channel(self, interface):
         """Returns the interface's current channel"""
@@ -518,7 +518,7 @@ class Dslac55uRouter(Router):
         self.list_features()
 
     def __str__(self):
-        return "DSL-AC55U " + Router.__str__(self)
+        return self.name + ": DSL-AC55U backend" + " at " + self.address
 
     def get_interfaces(self):
         """Manual override for wireless interfaces of the DSL-AC55U"""
