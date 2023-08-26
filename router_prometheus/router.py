@@ -155,7 +155,7 @@ class Router:
                     self.connect()
             if "ssid" in self.supported_features:
                 if self.connection.is_connected:
-                    self.ssid_info[interface] = self.get_ssid(interface)
+                    self.ssids[interface] = self.get_ssid(interface)
 
     def get_interface_rxtx(self, interface, selector):
         """Takes an interface and selector (either rx or tx)
@@ -346,7 +346,7 @@ class OwrtRouter(Router):
 
     def __init__(self, routerconfig):
         self.implemented_features = ["channel", "rxtx", "proc",
-                                     "int_detect", "signal"]
+                                     "int_detect", "signal", "ssid"]
         self.supported_features = self.implemented_features.copy()
         Router.__init__(self, routerconfig)
         self.initial_interfaces = self.wireless_interfaces.copy()
@@ -354,6 +354,7 @@ class OwrtRouter(Router):
         self.device_offset = None
         self.ss_offset = None
         self.channel_lines = {}
+        self.ssid_lines = {}
 
     def __str__(self):
         return self.name + ": OpenWRT backend" + " at " + self.address
@@ -378,32 +379,54 @@ class OwrtRouter(Router):
 
     def get_channel(self, interface):
         """Returns the interface's current channel"""
-        iw_info = self.connection.run("iw " + interface + " info",
+        self.iw_info = self.connection.run("iw " + interface + " info",
                                       hide=True).stdout.strip().splitlines()
-        return self.iw_channel(interface, iw_info)
+        return self.iw_channel(interface, self.iw_info)
+
+    def get_ssid(self, interface):
+        return self.iw_ssid(interface, self.iw_info)
 
     def iw_channel(self, interface, iw_info):
         """Returns the interface's current channel"""
-        # Might later be modified for extracting other info as well
         if interface not in self.channel_lines:
-            self.get_channel_line(interface, iw_info)
+            self.get_iw_lines(interface, iw_info)
         elif iw_info[self.channel_lines[interface]].strip()\
                                                    .split()[0] != "channel":
             self.rprint("Fixing " + interface + "'s channel line number")
-            self.get_channel_line(interface, iw_info)
+            self.get_iw_lines(interface, iw_info)
         if interface not in self.channel_lines:
             return 0
         else:
             return iw_info[self.channel_lines[interface]].strip().split()[1]
 
-    def get_channel_line(self, interface, iw_info):
+    def iw_ssid(self, interface, iw_info):
+        """Returns the interface's current SSID"""
+        if interface not in self.ssid_lines:
+            self.get_iw_lines(interface, iw_info)
+        elif iw_info[self.ssid_lines[interface]].strip()\
+                                                   .split()[0] != "ssid":
+            self.rprint("Fixing " + interface + "'s SSID line number")
+            self.get_iw_lines(interface, iw_info)
+        if interface not in self.ssid_lines:
+            return ""
+        else:
+            return iw_info[self.ssid_lines[interface]].strip().split()[1]
+
+    def get_iw_lines(self, interface, iw_info):
         """Finds the line number containing the channel info"""
         if interface in self.channel_lines:
             del self.channel_lines[interface]
+        if interface in self.ssid_lines:
+            del self.ssid_lines[interface]
         for index, line in enumerate(iw_info):
+            if line.strip().split()[0] == "ssid":
+                self.ssid_lines[interface] = index
             if line.strip().split()[0] == "channel":
                 self.channel_lines[interface] = index
                 break
+        if interface not in self.ssid_lines:
+            self.rprint("Unable to find " + interface + "'s SSID")
+            self.rprint(interface + " is likely not up")
         if interface not in self.channel_lines:
             self.rprint("Unable to find " + interface + "'s channel")
             self.rprint(interface + " is likely not up")
