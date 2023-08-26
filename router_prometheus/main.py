@@ -138,8 +138,12 @@ def create_router_list(routers_dict):
             router_class = router.UbntRouter
         elif routers_dict[rtr]["backend"] == "dsl-ac55U":
             router_class = router.Dslac55uRouter
+        else:
+            print(rtr + ": No such backend: " + routers_dict[rtr]["backend"])
+            continue
         try:
             router_object = router_class({rtr: routers_dict[rtr]})
+            print(router_object)
         except paramiko.ssh_exception.NoValidConnectionsError:
             print("Error connecting to router " + rtr)
         except socket.gaierror:
