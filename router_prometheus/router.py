@@ -458,7 +458,15 @@ class OwrtRouter(Router):
             ss_line = device_line + self.ss_offset
             address = iwdump[device_line].split()[1]
             ss = iwdump[ss_line].strip().split()[1]
-            ss_dict[address] = ss
+            if ss.lstrip('-').isnumeric():
+                ss_dict[address] = ss
+            else:
+                self.rprint("Looks like iwdump has changed a bit")
+                self.rprint("Falling back to unoptimized praser")
+                self.rprint("This will be a slower refresh")
+                self.device_offset = None
+                ss_dict = self.iw_dump_ss(iwdump)
+                break
         return ss_dict
 
 
