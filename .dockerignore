@@ -3,3 +3,5 @@
 grafana_screenshot.png
 Dockerfile
 Dockerfile.dev
+*.egg-info
+build
