@@ -11,6 +11,8 @@ from prometheus_client import PLATFORM_COLLECTOR  # type: ignore
 from prometheus_client import PROCESS_COLLECTOR  # type: ignore
 from prometheus_client.core import GaugeMetricFamily, REGISTRY  # type: ignore
 
+from typing import Type, Generator
+
 # Custom modules import
 from . import router
 from . import exceptions
@@ -23,7 +25,7 @@ ROUTERS_CONFIG_LOCATION = CONFIG_DIRECTORY + "routers.yml"
 MAPPING_CONFIG_LOCATION = CONFIG_DIRECTORY + "mapping.yml"
 
 
-def load_main_config():
+def load_main_config() -> dict | None:
     """Tries to create a config directory first
     if it can't find the main config in the config directory,
     it executes create_main_config()
@@ -45,8 +47,10 @@ def load_main_config():
         print("Main config not found!")
         create_main_config()
 
+    return None
 
-def load_routers_config():
+
+def load_routers_config() -> dict | None:
     """Same as load_main_config() but with the routers config and without
     trying to create the config directory"""
     try:
@@ -59,7 +63,7 @@ def load_routers_config():
         return None
 
 
-def load_mapping_config():
+def load_mapping_config() -> dict | None:
     """Same as load_routers_config() but with the mapping config and without
     creating the file"""
     try:
@@ -76,7 +80,7 @@ def load_mapping_config():
         return None
 
 
-def create_main_config():
+def create_main_config() -> None:
     """Creates an example main config file"""
     print("Creating an example main config file...")
     config = {"cpython_metrics": False, "port": 9000,
@@ -92,7 +96,7 @@ def create_main_config():
     sys.exit()
 
 
-def create_routers_config():
+def create_routers_config() -> None:
     """Creates an example routers config file"""
     print("Creating an example routers config file...")
     routers = {'router1':
@@ -126,21 +130,23 @@ def create_routers_config():
     sys.exit()
 
 
-def create_router_list(routers_dict):
+def create_router_list(routers_dict: dict) -> list:
     """Returns a list of router objects"""
     routers = []
     for rtr in routers_dict:
-        if routers_dict[rtr]["backend"] == "dd-wrt":
-            router_class = router.DdwrtRouter
-        elif routers_dict[rtr]["backend"] == "openwrt":
-            router_class = router.OwrtRouter
-        elif routers_dict[rtr]["backend"] == "ubnt":
-            router_class = router.UbntRouter
-        elif routers_dict[rtr]["backend"] == "dsl-ac55U":
-            router_class = router.Dslac55uRouter
-        else:
-            print(rtr + ": No such backend: " + routers_dict[rtr]["backend"])
-            continue
+        router_class: Type[router.Router] = router.Router
+        match routers_dict[rtr]["backend"]:
+            case "dd-wrt":
+                router_class = router.DdwrtRouter
+            case "openwrt":
+                router_class = router.OwrtRouter
+            case "ubnt":
+                router_class = router.UbntRouter
+            case "dsl-ac55U":
+                router_class = router.Dslac55uRouter
+            case _:
+                print(rtr + ": No such backend: " + routers_dict[rtr]["backend"])
+                continue
         try:
             router_object = router_class({rtr: routers_dict[rtr]})
             print(router_object)
@@ -157,7 +163,7 @@ def create_router_list(routers_dict):
     return routers
 
 
-def translate_macs(rssi_dict):
+def translate_macs(rssi_dict: dict) -> dict:
     """Uses the mapping dict and replaces known MAC addresses in rssi_dict
     with nicknames from mapping
     returns the modified dict"""
@@ -176,10 +182,10 @@ def translate_macs(rssi_dict):
 class RouterCollector:
     """Custom collector class for prometheus_client"""
 
-    def __init__(self, routers):
+    def __init__(self, routers: list) -> None:
         self.routers = routers
 
-    def collect(self):
+    def collect(self) -> Generator:
         """This is the function internally called by prometheus_client"""
         gauges = []
         load_gauge = GaugeMetricFamily('router_system_load',
@@ -272,14 +278,14 @@ class RouterCollector:
             yield gauge
 
 
-def main():
+def main() -> None:
     config = load_main_config()
     if config["debug"]:
         logging.basicConfig(level=logging.DEBUG)
         logging.debug("Debug output enabled!")
     routers = create_router_list(load_routers_config())
     global MAPPING
-    MAPPING = load_mapping_config()
+    MAPPING: dict | None = load_mapping_config()
     collectors = []
     collectors.append(RouterCollector(routers))
     for collector in collectors:
