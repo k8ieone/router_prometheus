@@ -1,2 +1,4 @@
 config/
 __pycache__
+*.egg-info
+build
