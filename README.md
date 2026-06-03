@@ -1,5 +1,9 @@
 # router_prometheus
 
+## Archival Warning
+
+This project is no longer actively maintained.
+
 ![Example Grafana Dashboard](.github/grafana_screenshot.png)
 
 
